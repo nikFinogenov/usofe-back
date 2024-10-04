@@ -17,10 +17,12 @@ initializeSequelize()
         console.error("Error during database setup:", err);
     });
 
-// Routes go here (e.g., userRoutes, questionRoutes, etc.)
-app.use('/users', require('./routes/userRoutes'));
-app.use('/questions', require('./routes/questionRoutes'));
-app.use('/answers', require('./routes/answerRoutes'));
+// Routes go here (e.g., userRoutes, postRoutes, etc.)
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/posts', require('./routes/postRoutes'));
+app.use('/api/comments', require('./routes/commentRoutes'));
+app.use('/api/categories', require('./routes/categoryRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
