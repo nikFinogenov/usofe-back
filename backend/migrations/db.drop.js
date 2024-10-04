@@ -7,55 +7,55 @@ const env = process.env.NODE_ENV || 'development';
 const dbConfig = config[env];
 
 async function dropDatabase() {
-  const superuserConfig = {
-    user: process.env.PG_USER || 'postgres', // Superuser or admin credentials
-    host: process.env.PG_HOST || dbConfig.host,
-    password: process.env.PG_SUPERUSER_PASSWORD || null, // Use superuser password
-    port: process.env.PG_PORT || 5432,
-    database: 'postgres', // Connect to default 'postgres' database
-  };
+    const superuserConfig = {
+        user: process.env.PG_USER || 'postgres', // Superuser or admin credentials
+        host: process.env.PG_HOST || dbConfig.host,
+        password: process.env.PG_SUPERUSER_PASSWORD || null, // Use superuser password
+        port: process.env.PG_PORT || 5432,
+        database: 'postgres', // Connect to default 'postgres' database
+    };
 
-  const client = new Client(superuserConfig); // Initialize pg client with superuser config
+    const client = new Client(superuserConfig); // Initialize pg client with superuser config
 
-  try {
-    await client.connect(); // Connect to the PostgreSQL server
-    console.log(`Connected to PostgreSQL as ${superuserConfig.user}`);
+    try {
+        await client.connect(); // Connect to the PostgreSQL server
+        console.log(`Connected to PostgreSQL as ${superuserConfig.user}`);
 
-    // Step 1: Check if the target database exists
-    const checkDbQuery = `SELECT 1 FROM pg_database WHERE datname = '${dbConfig.database}'`;
-    const dbExists = await client.query(checkDbQuery);
+        // Step 1: Check if the target database exists
+        const checkDbQuery = `SELECT 1 FROM pg_database WHERE datname = '${dbConfig.database}'`;
+        const dbExists = await client.query(checkDbQuery);
 
-    if (dbExists.rows.length === 0) {
-      console.log(`Database '${dbConfig.database}' does not exist.`);
-      return;
-    }
+        if (dbExists.rows.length === 0) {
+            console.log(`Database '${dbConfig.database}' does not exist.`);
+            return;
+        }
 
-    // Step 2: Close Sequelize connection before dropping the database
-    await db.sequelize.close();
-    console.log('Sequelize connection closed.');
+        // Step 2: Close Sequelize connection before dropping the database
+        await db.sequelize.close();
+        console.log('Sequelize connection closed.');
 
-    // Step 3: Terminate all active connections to the target database
-    const terminateConnectionsQuery = `
+        // Step 3: Terminate all active connections to the target database
+        const terminateConnectionsQuery = `
       SELECT pg_terminate_backend(pg_stat_activity.pid)
       FROM pg_stat_activity
       WHERE pg_stat_activity.datname = '${dbConfig.database}'
       AND pid <> pg_backend_pid();
     `;
-    await client.query(terminateConnectionsQuery);
-    console.log(`Terminated all active connections to '${dbConfig.database}'.`);
+        await client.query(terminateConnectionsQuery);
+        console.log(`Terminated all active connections to '${dbConfig.database}'.`);
 
-    // Step 4: Drop the target database
-    const dropDbQuery = `DROP DATABASE ${dbConfig.database}`;
-    await client.query(dropDbQuery);
-    console.log(`Database '${dbConfig.database}' has been dropped.`);
+        // Step 4: Drop the target database
+        const dropDbQuery = `DROP DATABASE ${dbConfig.database}`;
+        await client.query(dropDbQuery);
+        console.log(`Database '${dbConfig.database}' has been dropped.`);
 
-  } catch (err) {
-    console.error('Error dropping database:', err);
-  } finally {
-    // Step 5: Close the pg client connection
-    await client.end();
-    console.log('Disconnected from PostgreSQL server.');
-  }
+    } catch (err) {
+        console.error('Error dropping database:', err);
+    } finally {
+        // Step 5: Close the pg client connection
+        await client.end();
+        console.log('Disconnected from PostgreSQL server.');
+    }
 }
 
-module.exports = dropDatabase();
+dropDatabase();
