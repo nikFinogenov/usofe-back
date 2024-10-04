@@ -1,4 +1,4 @@
-const { Sequelize } = require('sequelize');
+// const { Sequelize } = require('sequelize');
 const { Client } = require('pg'); // Import pg client for raw SQL queries
 const config = require('../config/config.json');
 const db = require('../models/index');
