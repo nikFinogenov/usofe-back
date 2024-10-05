@@ -1,5 +1,4 @@
 const nodemailer = require('nodemailer');
-// const config = require('../config/config.json'); // Email credentials should be stored in the config
 
 // Create transporter
 const transporter = nodemailer.createTransport({

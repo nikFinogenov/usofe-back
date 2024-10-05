@@ -10,6 +10,7 @@ exports.isAuthenticated = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        // console.log(decoded);
         req.user = decoded; // Attach the decoded token to the request object
         next();
     } catch (error) {

@@ -106,7 +106,7 @@ exports.requestPasswordReset = async (req, res) => {
 
         // Generate a reset token
         const resetToken = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '1h' });
-        user.resetToken = resetToken;
+        user.confirmationToken = resetToken;
         await user.save();
 
         // Send password reset email
@@ -137,7 +137,7 @@ exports.confirmPasswordReset = async (req, res) => {
 
         // Update the password
         user.password = newPassword;
-        user.resetToken = null;
+        user.confirmationToken = null;
         await user.save();
 
         res.status(200).json({ message: 'Password updated successfully' });

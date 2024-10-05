@@ -96,7 +96,7 @@ exports.createPost = async (req, res) => {
     const newPost = await db.Post.create({
       title,
       content,
-      userId: req.user.id, // Assuming user is authenticated
+      authorId: req.user.id, // Assuming user is authenticated
     });
 
     // Associate categories if provided
@@ -104,7 +104,7 @@ exports.createPost = async (req, res) => {
       const categoriesToAdd = await db.Category.findAll({
         where: { id: categories },
       });
-      await newPost.addCategories(categoriesToAdd);
+      await newPost.setCategories(categoriesToAdd);
     }
 
     res.status(201).json(newPost);
