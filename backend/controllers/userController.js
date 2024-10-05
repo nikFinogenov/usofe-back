@@ -1,5 +1,5 @@
 const db = require('../models');
-const bcrypt = require('bcrypt');
+// const bcrypt = require('bcrypt');
 
 // Register user
 exports.getAllUsers = async (req, res) => {
@@ -47,14 +47,11 @@ exports.createUser = async (req, res) => {
       return res.status(400).json({ error: 'Login or email already exists' });
     }
 
-    // Hash the password before storing
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     // Create the new user with role (admin can assign any role)
     const newUser = await db.User.create({
       login,
       email,
-      password: hashedPassword,
+      password,
       role: role || 'user', // Default to 'user' if no role is specified
     });
 

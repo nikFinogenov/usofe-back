@@ -55,6 +55,14 @@ module.exports = (sequelize) => {
     role: {
       type: DataTypes.ENUM('admin', 'user'),
       defaultValue: 'user'
+    },
+    confirmationToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    emailConfirmed: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     }
   }, {
     sequelize,

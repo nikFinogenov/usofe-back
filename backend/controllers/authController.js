@@ -1,8 +1,10 @@
-const bcrypt = require('bcrypt');
+// const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
 const db = require('../models'); // Import the models (User, etc.)
 // const sendResetEmail = require('../utils/emailService'); // Email sending function for password reset links
+const { sendConfirmationEmail, sendResetEmail } = require('../services/emailService');
+// const { password } = require('pg/lib/defaults');
 
 // Environment variables
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -11,7 +13,7 @@ const TOKEN_EXPIRATION = process.env.TOKEN_EXPIRATION || '1h';
 // Register a new user
 exports.register = async (req, res) => {
     try {
-        const { login, email, password, passwordConfirmation } = req.body;
+        const { login, email, fullName, password, passwordConfirmation, } = req.body;
 
         // Validate password confirmation
         if (password !== passwordConfirmation) {
@@ -26,23 +28,25 @@ exports.register = async (req, res) => {
             return res.status(400).json({ error: 'Login or email already exists' });
         }
 
-        // Hash the password before storing
-        const hashedPassword = await bcrypt.hash(password, 10);
-
         // Create the new user
         const newUser = await db.User.create({
             login,
             email,
-            password: hashedPassword,
+            password,
+            fullName,
             role: 'user', // Default role
-            emailConfirmed: false, // Email confirmation status
         });
 
-        // Optionally, send email confirmation (depends on your logic)
-        // sendConfirmationEmail(newUser.email);
+        const confirmationToken = jwt.sign({ email: newUser.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        newUser.confirmationToken = confirmationToken;
+        await newUser.save();
+        // Send confirmation email
+        const confirmationLink = `${process.env.FRONTEND_URL}/api/auth/confirm/${confirmationToken}`;
+        await sendConfirmationEmail(newUser.email, confirmationLink);
 
         res.status(201).json({ message: 'User registered successfully, please confirm your email.' });
     } catch (error) {
+        console.log(error);
         res.status(500).json({ error: 'Registration failed' });
     }
 };
@@ -67,7 +71,7 @@ exports.login = async (req, res) => {
         }
 
         // Check the password
-        const validPassword = await bcrypt.compare(password, user.password);
+        const validPassword = user.checkPassword(password);
         if (!validPassword) {
             return res.status(401).json({ error: 'Invalid login credentials' });
         }
@@ -102,10 +106,12 @@ exports.requestPasswordReset = async (req, res) => {
 
         // Generate a reset token
         const resetToken = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '1h' });
+        user.resetToken = resetToken;
+        await user.save();
 
         // Send password reset email
-        const resetLink = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
-        // await sendResetEmail(user.email, resetLink);
+        const resetLink = `${process.env.FRONTEND_URL}/api/auth/password-reset/${resetToken}`;
+        await sendResetEmail(user.email, resetLink);
 
         res.status(200).json({ message: 'Password reset link sent to email' });
     } catch (error) {
@@ -120,22 +126,44 @@ exports.confirmPasswordReset = async (req, res) => {
         const { newPassword } = req.body;
 
         // Verify reset token
-        const decoded = jwt.verify(confirmToken, JWT_SECRET);
+        const decoded = jwt.verify(confirmToken, process.env.JWT_SECRET);
 
         // Find the user
-        const user = await db.User.findByPk(decoded.id);
+        const user = await db.User.findOne({ where: { email: decoded.email } });
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Hash the new password
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
 
         // Update the password
-        user.password = hashedPassword;
+        user.password = newPassword;
+        user.resetToken = null;
         await user.save();
 
         res.status(200).json({ message: 'Password updated successfully' });
+    } catch (error) {
+        res.status(400).json({ error: 'Invalid or expired token' });
+    }
+};
+exports.confirmEmail = async (req, res) => {
+    try {
+        const { token } = req.params;
+
+        // Verify token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Find user by email and update their emailConfirmed field
+        const user = await db.User.findOne({ where: { email: decoded.email } });
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        user.emailConfirmed = true;
+        user.confirmationToken = null; // Clear the token after confirmation
+        await user.save();
+
+        res.status(200).json({ message: 'Email confirmed successfully' });
     } catch (error) {
         res.status(400).json({ error: 'Invalid or expired token' });
     }
