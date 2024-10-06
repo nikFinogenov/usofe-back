@@ -13,12 +13,12 @@ const TOKEN_EXPIRATION = process.env.TOKEN_EXPIRATION || '1h';
 // Register a new user
 exports.register = async (req, res) => {
     try {
-        const { login, email, fullName, password, passwordConfirmation, } = req.body;
+        const { login, email, fullName, password } = req.body;
 
         // Validate password confirmation
-        if (password !== passwordConfirmation) {
-            return res.status(400).json({ error: 'Passwords do not match' });
-        }
+        // if (password !== passwordConfirmation) {
+        //     return res.status(400).json({ error: 'Passwords do not match' });
+        // }
 
         // Check if user or email already exists
         const existingUser = await db.User.findOne({
@@ -37,7 +37,7 @@ exports.register = async (req, res) => {
             role: 'user', // Default role
         });
 
-        const confirmationToken = jwt.sign({ email: newUser.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        const confirmationToken = jwt.sign({ email: newUser.email }, JWT_SECRET, { expiresIn: '7d' });
         newUser.confirmationToken = confirmationToken;
         await newUser.save();
         // Send confirmation email
@@ -46,7 +46,7 @@ exports.register = async (req, res) => {
 
         res.status(201).json({ message: 'User registered successfully, please confirm your email.' });
     } catch (error) {
-        console.log(error);
+        // console.log(error);
         res.status(500).json({ error: 'Registration failed' });
     }
 };
@@ -80,6 +80,7 @@ exports.login = async (req, res) => {
         const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
             expiresIn: TOKEN_EXPIRATION,
         });
+        // console.log(user.role);
 
         res.status(200).json({ message: 'Login successful', token });
     } catch (error) {
@@ -105,7 +106,7 @@ exports.requestPasswordReset = async (req, res) => {
         }
 
         // Generate a reset token
-        const resetToken = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '1h' });
+        const resetToken = jwt.sign({ email: user.email }, JWT_SECRET, { expiresIn: TOKEN_EXPIRATION });
         user.confirmationToken = resetToken;
         await user.save();
 
@@ -125,8 +126,9 @@ exports.confirmPasswordReset = async (req, res) => {
         const { confirmToken } = req.params;
         const { newPassword } = req.body;
 
+
         // Verify reset token
-        const decoded = jwt.verify(confirmToken, process.env.JWT_SECRET);
+        const decoded = jwt.verify(confirmToken, JWT_SECRET);
 
         // Find the user
         const user = await db.User.findOne({ where: { email: decoded.email } });

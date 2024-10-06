@@ -9,7 +9,7 @@ exports.getAllPosts = async (req, res) => {
     const posts = await db.Post.findAndCountAll({
       limit: parseInt(pageSize),
       offset: parseInt(offset),
-      include: ['categories', 'author'],
+      include: ['categories', 'user'],
     });
 
     res.status(200).json({
@@ -26,7 +26,7 @@ exports.getAllPosts = async (req, res) => {
 exports.getPost = async (req, res) => {
   try {
     const post = await db.Post.findByPk(req.params.post_id, {
-      include: ['categories', 'author', 'comments'],
+      include: ['categories', 'user', 'comments'],
     });
 
     if (!post) return res.status(404).json({ error: 'Post not found' });
@@ -41,7 +41,7 @@ exports.getPostComments = async (req, res) => {
   try {
     const comments = await db.Comment.findAll({
       where: { postId: req.params.post_id },
-      include: ['author'],
+      include: ['user'],
     });
 
     res.status(200).json(comments);
@@ -96,7 +96,7 @@ exports.createPost = async (req, res) => {
     const newPost = await db.Post.create({
       title,
       content,
-      authorId: req.user.id, // Assuming user is authenticated
+      userId: req.user.id, // Assuming user is authenticated
     });
 
     // Associate categories if provided

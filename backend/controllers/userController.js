@@ -1,4 +1,7 @@
 const db = require('../models');
+const jwt = require('jsonwebtoken');
+const { Op } = require('sequelize');
+const { sendConfirmationEmail, sendResetEmail } = require('../services/emailService');
 // const bcrypt = require('bcrypt');
 
 // Register user
@@ -32,12 +35,12 @@ exports.getUser = async (req, res) => {
 
 exports.createUser = async (req, res) => {
   try {
-    const { login, email, password, passwordConfirmation, role } = req.body;
+    const { login, email, fullName, password, role } = req.body;
 
     // Validate password confirmation
-    if (password !== passwordConfirmation) {
-      return res.status(400).json({ error: 'Passwords do not match' });
-    }
+    // if (password !== passwordConfirmation) {
+    //   return res.status(400).json({ error: 'Passwords do not match' });
+    // }
 
     // Check if login or email already exists
     const existingUser = await db.User.findOne({
@@ -52,11 +55,20 @@ exports.createUser = async (req, res) => {
       login,
       email,
       password,
+      fullName,
       role: role || 'user', // Default to 'user' if no role is specified
     });
 
+    const confirmationToken = jwt.sign({ email: newUser.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    newUser.confirmationToken = confirmationToken;
+    await newUser.save();
+    // Send confirmation email
+    const confirmationLink = `${process.env.FRONTEND_URL}/api/auth/confirm/${confirmationToken}`;
+    await sendConfirmationEmail(newUser.email, confirmationLink);
+
     res.status(201).json({ message: 'User created successfully', newUser });
   } catch (error) {
+    // console.log(error);
     res.status(500).json({ error: 'Failed to create user' });
   }
 };

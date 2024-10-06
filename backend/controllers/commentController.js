@@ -29,7 +29,7 @@ exports.createCommentLike = async (req, res) => {
     if (!comment) return res.status(404).json({ error: 'Comment not found' });
 
     const newLike = await db.Like.create({
-      authorId: userId,
+      userId: userId,
       commentId: req.params.comment_id,
       type: 'like',
     });
@@ -69,7 +69,7 @@ exports.deleteCommentLike = async (req, res) => {
   try {
     const { userId } = req.body;
     const like = await db.Like.findOne({
-      where: { authorId: userId, commentId: req.params.comment_id, type: 'like' },
+      where: { userId: userId, commentId: req.params.comment_id, type: 'like' },
     });
 
     if (!like) return res.status(404).json({ error: 'Like not found' });
