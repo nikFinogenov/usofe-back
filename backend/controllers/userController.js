@@ -56,15 +56,16 @@ exports.createUser = async (req, res) => {
       email,
       password,
       fullName,
-      role: role || 'user', // Default to 'user' if no role is specified
+      role: role || 'user',
+      emailConfirmed: true // Default to 'user' if no role is specified
     });
 
-    const confirmationToken = jwt.sign({ email: newUser.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    newUser.confirmationToken = confirmationToken;
+    // const confirmationToken = jwt.sign({ email: newUser.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    // newUser.confirmationToken = confirmationToken;
     await newUser.save();
-    // Send confirmation email
-    const confirmationLink = `${process.env.FRONTEND_URL}/api/auth/confirm/${confirmationToken}`;
-    await sendConfirmationEmail(newUser.email, confirmationLink);
+    // // Send confirmation email
+    // const confirmationLink = `${process.env.FRONTEND_URL}/api/auth/confirm/${confirmationToken}`;
+    // await sendConfirmationEmail(newUser.email, confirmationLink);
 
     res.status(201).json({ message: 'User created successfully', newUser });
   } catch (error) {
