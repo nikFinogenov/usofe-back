@@ -5,11 +5,11 @@ const upload = require('../middlewares/uploadMiddleware'); // Assuming you use m
 const router = express.Router();
 
 // Register user
-router.get('/', isAuthenticated, isAdmin, userController.getAllUsers);
-router.get('/:user_id', isAuthenticated, userController.getUser);
-router.post('/', isAuthenticated, isAdmin, userController.createUser);
-router.patch('/avatar', isAuthenticated, upload.single('avatar'), userController.uploadAvatar);
-router.patch('/:user_id', isAuthenticated, userController.updateUser);
-router.delete('/:user_id', isAuthenticated, userController.deleteUser);
+router.get('/', isAuthenticated, isAdmin, userController.getAllUsers);//DONE
+router.get('/:user_id', isAuthenticated, userController.getUser);//DONE
+router.post('/', isAuthenticated, isAdmin, userController.createUser);//DONE
+router.patch('/avatar', isAuthenticated, upload.single('avatar'), userController.uploadAvatar);//DONE
+router.patch('/:user_id', isAuthenticated, userController.updateUser);//DONE
+router.delete('/:user_id', isAuthenticated, userController.deleteUser);//DONE
 
 module.exports = router;

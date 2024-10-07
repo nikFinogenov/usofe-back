@@ -4,9 +4,9 @@ const bcrypt = require('bcrypt'); // For hashing passwords
 module.exports = (sequelize) => {
   class User extends Model {
     static associate(models) {
-      User.hasMany(models.Post, { foreignKey: 'userId' });
-      User.hasMany(models.Comment, { foreignKey: 'userId' });
-      User.hasMany(models.Like, { foreignKey: 'userId' });
+      User.hasMany(models.Post, { foreignKey: 'userId', onDelete: 'CASCADE', hooks: true });
+      User.hasMany(models.Comment, { foreignKey: 'userId', onDelete: 'CASCADE', hooks: true });
+      User.hasMany(models.Like, { foreignKey: 'userId', onDelete: 'CASCADE', hooks: true });
     }
 
     // Method to check password

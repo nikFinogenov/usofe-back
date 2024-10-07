@@ -7,6 +7,7 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware to parse JSON requests
 app.use(express.json());
+// app.use('/uploads', express.static('uploads'));
 
 // Sync the database and initialize tables
 initializeSequelize()
