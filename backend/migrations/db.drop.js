@@ -8,11 +8,11 @@ const dbConfig = config[env];
 
 async function dropDatabase() {
     const superuserConfig = {
-        user: process.env.PG_USER || 'postgres', // Superuser or admin credentials
+        user: process.env.PG_USER || 'postgres',
         host: process.env.PG_HOST || dbConfig.host,
-        password: process.env.PG_SUPERUSER_PASSWORD || null, // Use superuser password
+        password: process.env.PG_SUPERUSER_PASSWORD || null, 
         port: process.env.PG_PORT || 5432,
-        database: 'postgres', // Connect to default 'postgres' database
+        database: 'postgres',
     };
 
     const client = new Client(superuserConfig); // Initialize pg client with superuser config

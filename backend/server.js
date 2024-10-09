@@ -1,4 +1,5 @@
 const express = require('express');
+// const session = require('express-session');
 // const db = require('./models/index');  // This automatically loads all the models
 const initializeSequelize = require('./migrations/sequelize');
 const app = express();
@@ -18,6 +19,13 @@ initializeSequelize()
         console.error("Error during database setup:", err);
     });
 
+const adminRouter = require('./admin');
+app.use('/admin', adminRouter);
+// app.use(session({
+//     secret: cookie_secret,
+//     resave: true,
+//     saveUninitialized: true
+// }));
 // Routes go here (e.g., userRoutes, postRoutes, etc.)
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/posts', require('./routes/postRoutes'));

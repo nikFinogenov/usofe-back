@@ -181,7 +181,7 @@ exports.deletePost = async (req, res) => {
 };
 exports.deleteLike = async (req, res) => {
   try {
-    console.log(req.user.id);
+    // console.log(req.user.id);
     const like = await db.Like.findOne({
       where: {
         postId: req.params.post_id,

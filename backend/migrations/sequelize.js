@@ -8,6 +8,7 @@ const env = process.env.NODE_ENV || 'development';
 const dbConfig = config[env];
 
 async function setupDatabase() {
+  // console.log(process.env.PG_USER);
   const superuserConfig = {
     user: process.env.PG_USER || 'postgres',
     host: process.env.PG_HOST || dbConfig.host,
@@ -58,12 +59,6 @@ async function setupDatabase() {
 async function initializeSequelize() {
   // Setup the database and user before initializing Sequelize
   await setupDatabase();
-
-  // Now that the user and database exist, initialize Sequelize
-  // const sequelize = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, {
-  //   host: dbConfig.host,
-  //   dialect: 'postgres'
-  // });
 
   try {
     await db.sequelize.authenticate();
