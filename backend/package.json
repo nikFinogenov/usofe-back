@@ -27,7 +27,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "db.drop": "node backend/migrations/db.drop.js",
+    "db.drop": "node migrations/db.drop.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

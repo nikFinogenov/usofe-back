@@ -1,6 +1,5 @@
 const db = require('../models');
 
-// Create a comment
 exports.getComment = async (req, res) => {
   try {
     const comment = await db.Comment.findByPk(req.params.comment_id);
@@ -11,6 +10,7 @@ exports.getComment = async (req, res) => {
     res.status(500).json({ error: 'Failed to retrieve comment' });
   }
 };
+
 exports.getCommentLikes = async (req, res) => {
   try {
     const likes = await db.Like.findAll({
@@ -21,16 +21,33 @@ exports.getCommentLikes = async (req, res) => {
     res.status(500).json({ error: 'Failed to retrieve likes for comment' });
   }
 };
+
 exports.createCommentLike = async (req, res) => {
   try {
     const comment = await db.Comment.findByPk(req.params.comment_id);
+    const { type } = req.body
 
-    if (!comment) return res.status(404).json({ error: 'Comment not found' });
+    if (!comment) return res.status(404).json({ error: 'Comment not found' });    
 
+    const existingLike = await db.Like.findOne({
+      where: {
+        userId: req.user.id,
+        commentId: req.params.comment_id
+      }
+    });
+    if (existingLike) {
+      if (existingLike.type !== type) {
+        existingLike.type = type;
+        await existingLike.save();
+        return res.status(200).json({ message: 'Like type updated successfully', like: existingLike });
+      } else {
+        return res.status(400).json({ error: 'You have already liked this comment with the same type' });
+      }
+    }
     const newLike = await db.Like.create({
       userId: req.user.id,
       commentId: req.params.comment_id,
-      type: 'like',
+      type: type,
     });
 
     res.status(201).json(newLike);
@@ -38,6 +55,7 @@ exports.createCommentLike = async (req, res) => {
     res.status(500).json({ error: 'Failed to create like for comment' });
   }
 };
+
 exports.updateComment = async (req, res) => {
   try {
     const { content } = req.body;
@@ -45,6 +63,9 @@ exports.updateComment = async (req, res) => {
 
     if (!comment) return res.status(404).json({ error: 'Comment not found' });
 
+    if(comment.userId !== req.user.id) {
+      res.status(403).json({ error: 'Unauthorized to update this comment'});
+    }
     comment.content = content || comment.content;
     await comment.save();
 
@@ -57,6 +78,9 @@ exports.deleteComment = async (req, res) => {
   try {
     const comment = await db.Comment.findByPk(req.params.comment_id);
     if (!comment) return res.status(404).json({ error: 'Comment not found' });
+    if(comment.userId !== req.user.id) {
+      res.status(403).json({ error: 'Unauthorized to delete this comment'});
+    }
 
     await comment.destroy();
     res.status(200).json({ message: 'Comment deleted successfully' });
@@ -67,7 +91,7 @@ exports.deleteComment = async (req, res) => {
 exports.deleteCommentLike = async (req, res) => {
   try {
     const like = await db.Like.findOne({
-      where: { userId: req.user.id, commentId: req.params.comment_id, type: 'like' },
+      where: { userId: req.user.id, commentId: req.params.comment_id },
     });
 
     if (!like) return res.status(404).json({ error: 'Like not found' });

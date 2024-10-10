@@ -76,7 +76,7 @@ exports.createUser = async (req, res) => {
 
 exports.uploadAvatar = async (req, res) => {
   try {
-    const userId  = req.user.id; // Assuming `userId` is coming from the logged-in user's token
+    const userId = req.user.id; // Assuming `userId` is coming from the logged-in user's token
     const avatar = req.file.path; // Assuming you are using `multer` for file uploads
 
     // Find the user
@@ -98,7 +98,7 @@ exports.uploadAvatar = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { user_id } = req.params;
-    const { login, email, fullName, password, role }= req.body; // You can add more fields to update as needed
+    const { login, email, fullName, password, role } = req.body; // You can add more fields to update as needed
 
     // Find the user
     const user = await db.User.findByPk(user_id);
@@ -106,6 +106,11 @@ exports.updateUser = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
+    // if (req.user.role !== 'admin') {
+      if (user.id !== user_id) {
+        res.status(403).json({ error: 'Unauthorized to update this user' });
+      }
+    // }
 
     // Update user fields
     if (fullName) user.fullName = fullName;

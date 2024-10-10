@@ -1,16 +1,21 @@
 const express = require('express');
-// const session = require('express-session');
-// const db = require('./models/index');  // This automatically loads all the models
 const initializeSequelize = require('./migrations/sequelize');
+const adminRouter = require('./services/adminService');
 const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-// Middleware to parse JSON requests
-app.use(express.json());
-// app.use('/uploads', express.static('uploads'));
+const requiredEnvVars = ['PG_USER', 'JWT_SECRET', 'TOKEN_EXPIRATION', 'EMAIL_USER', 'EMAIL_PASS', 'FRONTEND_URL'];
 
-// Sync the database and initialize tables
+requiredEnvVars.forEach((envVar) => {
+    if (!process.env[envVar]) {
+        console.error(`ERROR: Missing environment variable: ${envVar}`);
+        process.exit(1);
+    }
+});
+
+app.use(express.json());
+
 initializeSequelize()
     .then(() => {
         console.log("Database setup complete.");
@@ -19,16 +24,8 @@ initializeSequelize()
         console.error("Error during database setup:", err);
     });
 
-const adminRouter = require('./admin');
-
-// app.use(express.static('assets'));
 app.use('/admin', adminRouter);
-// app.use(session({
-//     secret: cookie_secret,
-//     resave: true,
-//     saveUninitialized: true
-// }));
-// Routes go here (e.g., userRoutes, postRoutes, etc.)
+
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/posts', require('./routes/postRoutes'));
 app.use('/api/comments', require('./routes/commentRoutes'));

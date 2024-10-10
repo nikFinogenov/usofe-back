@@ -1,16 +1,30 @@
+const { where } = require('sequelize');
 const db = require('../models');
 
-// Create a post
 exports.getAllPosts = async (req, res) => {
-  const { page = 1, pageSize = 10 } = req.query; // Default to page 1 and 10 posts per page
+  const { page = 1, pageSize = 10 } = req.query;
 
   try {
     const offset = (page - 1) * pageSize;
-    const posts = await db.Post.findAndCountAll({
-      limit: parseInt(pageSize),
-      offset: parseInt(offset),
-      include: ['categories', 'user'],
-    });
+    let posts;
+    if (req.user.role === 'admin') {
+      posts = await db.Post.findAndCountAll({
+        limit: parseInt(pageSize),
+        offset: parseInt(offset),
+        include: ['categories', 'user'],
+      });
+    }
+    else {
+      posts = await db.Post.findAndCountAll({
+        limit: parseInt(pageSize),
+        offset: parseInt(offset),
+        include: ['categories', 'user'],
+        where: {
+          status: 'active'
+        }
+      });
+    }
+
 
     res.status(200).json({
       posts: posts.rows,
@@ -39,11 +53,19 @@ exports.getPost = async (req, res) => {
 
 exports.getPostComments = async (req, res) => {
   try {
-    const comments = await db.Comment.findAll({
-      where: { postId: req.params.post_id },
-      include: ['user'],
-    });
-
+    let comments;
+    if (req.user.role === 'admin') {
+      comments = await db.Comment.findAll({
+        where: { postId: req.params.post_id },
+        include: ['user'],
+      });
+    }
+    else {
+      comments = await db.Comment.findAll({
+        where: { postId: req.params.post_id, status: 'active' },
+        include: ['user'],
+      });
+    }
     res.status(200).json(comments);
   } catch (error) {
     res.status(500).json({ error: 'Failed to retrieve comments' });
@@ -55,7 +77,7 @@ exports.createComment = async (req, res) => {
     const { content } = req.body;
     const newComment = await db.Comment.create({
       content,
-      userId: req.user.id, // Assuming user is authenticated
+      userId: req.user.id,
       postId: req.params.post_id,
     });
 
@@ -96,10 +118,9 @@ exports.createPost = async (req, res) => {
     const newPost = await db.Post.create({
       title,
       content,
-      userId: req.user.id, // Assuming user is authenticated
+      userId: req.user.id,
     });
 
-    // Associate categories if provided
     if (categories && categories.length) {
       const categoriesToAdd = await db.Category.findAll({
         where: { id: categories },
@@ -129,20 +150,20 @@ exports.createLike = async (req, res) => {
 
 exports.updatePost = async (req, res) => {
   try {
-    const { title, content, categories } = req.body;
+    const { title, content, categories, status } = req.body;
     const post = await db.Post.findByPk(req.params.post_id);
 
     if (!post) return res.status(404).json({ error: 'Post not found' });
 
-    // Check if the current user is the creator of the post
-    if (req.user.role !== 'admin') {
-      if (post.userId !== req.user.id) {
-        return res.status(403).json({ error: 'Unauthorized to update this post' });
-      }
+    // if (req.user.role !== 'admin') {
+    if (post.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized to update this post' });
     }
+    // }
 
     post.title = title || post.title;
     post.content = content || post.content;
+    post.status = status || post.status;
 
     await post.save();
 
@@ -167,11 +188,11 @@ exports.deletePost = async (req, res) => {
     if (!post) return res.status(404).json({ error: 'Post not found' });
 
     // Check if the current user is the creator of the post
-    if (req.user.role !== 'admin') {
-      if (post.userId !== req.user.id) {
-        return res.status(403).json({ error: 'Unauthorized to delete this post' });
-      }
+    // if (req.user.role !== 'admin') {
+    if (post.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized to delete this post' });
     }
+    // }
 
     await post.destroy();
     res.status(200).json({ message: 'Post deleted successfully' });

@@ -7,6 +7,10 @@ module.exports = (sequelize, DataTypes) => {
     publishDate: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
+    },
+    status: {
+      type: DataTypes.ENUM('active', 'inactive'),
+      defaultValue: 'active'
     }
   }, {});
 
