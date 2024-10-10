@@ -1,15 +1,13 @@
 const nodemailer = require('nodemailer');
 
-// Create transporter
 const transporter = nodemailer.createTransport({
-  service: 'Gmail', // or another email service
+  service: 'Gmail',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 });
 
-// Function to send confirmation email
 async function sendConfirmationEmail(email, confirmationLink) {
   const message = {
     from: process.env.EMAIL_USER,
@@ -24,7 +22,6 @@ async function sendConfirmationEmail(email, confirmationLink) {
   await transporter.sendMail(message);
 }
 
-// Function to send password reset email
 async function sendResetEmail(email, resetLink) {
   const message = {
     from: process.env.EMAIL_USER,

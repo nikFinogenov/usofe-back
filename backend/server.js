@@ -5,7 +5,7 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-const requiredEnvVars = ['PG_USER', 'JWT_SECRET', 'TOKEN_EXPIRATION', 'EMAIL_USER', 'EMAIL_PASS', 'FRONTEND_URL'];
+const requiredEnvVars = ['JWT_SECRET', 'TOKEN_EXPIRATION', 'EMAIL_USER', 'EMAIL_PASS', 'FRONTEND_URL'];
 
 requiredEnvVars.forEach((envVar) => {
     if (!process.env[envVar]) {

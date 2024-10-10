@@ -2,13 +2,11 @@ const db = require('../models');
 const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
 const { sendConfirmationEmail, sendResetEmail } = require('../services/emailService');
-// const bcrypt = require('bcrypt');
 
-// Register user
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await db.User.findAll({
-      attributes: { exclude: ['password'] }, // Exclude password from the response
+      attributes: { exclude: ['password'] },
     });
     res.status(200).json(users);
   } catch (error) {
@@ -16,7 +14,6 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-// Login user (basic example, add JWT later)
 exports.getUser = async (req, res) => {
   try {
     const user = await db.User.findByPk(req.params.user_id, {
@@ -37,12 +34,7 @@ exports.createUser = async (req, res) => {
   try {
     const { login, email, fullName, password, role } = req.body;
 
-    // Validate password confirmation
-    // if (password !== passwordConfirmation) {
-    //   return res.status(400).json({ error: 'Passwords do not match' });
-    // }
 
-    // Check if login or email already exists
     const existingUser = await db.User.findOne({
       where: { [Op.or]: [{ login }, { email }] },
     });
@@ -50,43 +42,34 @@ exports.createUser = async (req, res) => {
       return res.status(400).json({ error: 'Login or email already exists' });
     }
 
-    // Create the new user with role (admin can assign any role)
     const newUser = await db.User.create({
       login,
       email,
       password,
       fullName,
       role: role || 'user',
-      emailConfirmed: true // Default to 'user' if no role is specified
+      emailConfirmed: true
     });
 
-    // const confirmationToken = jwt.sign({ email: newUser.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    // newUser.confirmationToken = confirmationToken;
     await newUser.save();
-    // // Send confirmation email
-    // const confirmationLink = `${process.env.FRONTEND_URL}/api/auth/confirm/${confirmationToken}`;
-    // await sendConfirmationEmail(newUser.email, confirmationLink);
 
     res.status(201).json({ message: 'User created successfully', newUser });
   } catch (error) {
-    // console.log(error);
     res.status(500).json({ error: 'Failed to create user' });
   }
 };
 
 exports.uploadAvatar = async (req, res) => {
   try {
-    const userId = req.user.id; // Assuming `userId` is coming from the logged-in user's token
-    const avatar = req.file.path; // Assuming you are using `multer` for file uploads
+    const userId = req.user.id;
+    const avatar = req.file.path;
 
-    // Find the user
     const user = await db.User.findByPk(userId);
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Update avatar field
     user.profilePicture = avatar;
     await user.save();
 
@@ -98,21 +81,17 @@ exports.uploadAvatar = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { user_id } = req.params;
-    const { login, email, fullName, password, role } = req.body; // You can add more fields to update as needed
+    const { login, email, fullName, password, role } = req.body;
 
-    // Find the user
     const user = await db.User.findByPk(user_id);
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    // if (req.user.role !== 'admin') {
       if (user.id !== user_id) {
         res.status(403).json({ error: 'Unauthorized to update this user' });
       }
-    // }
 
-    // Update user fields
     if (fullName) user.fullName = fullName;
     if (email) user.email = email;
     if (login) user.login = login;
@@ -130,7 +109,6 @@ exports.deleteUser = async (req, res) => {
   try {
     const { user_id } = req.params;
 
-    // Find and delete the user
     const user = await db.User.findByPk(user_id);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
