@@ -1,6 +1,7 @@
 const AdminJS = require('adminjs');
 const AdminJSExpress = require('@adminjs/express');
 const AdminJSequalize = require('@adminjs/sequelize');
+// import { dark, light, noSidebar} from '@adminjs/themes';
 const db = require('./models/index');
 // const Post = require('./models/Post');
 // const { Comment } = require('./models/Comment');
@@ -9,16 +10,25 @@ const db = require('./models/index');
 // const { RP } = require('../models/associations');
 // const { postCategory } = require('../models/associations');
 
-const DEFAULT_ADMIN = {
-	email: 'admin@example.com',
-	password: 'password',
-};
+// const DEFAULT_ADMIN = 
 
 const authenticate = async (email, password) => {
-	if (email === DEFAULT_ADMIN.email && password === DEFAULT_ADMIN.password) {
-		return Promise.resolve(DEFAULT_ADMIN);
+	const user = await db.User.findOne({
+		where: { email, role: 'admin'},
+	});
+
+	if (!user) {
+		return null;
 	}
-	return null;
+	const validPassword = user.checkPassword(password);
+	if (!validPassword) {
+		return null;
+	}
+	else return Promise.resolve({email, password});
+	// if (email === DEFAULT_ADMIN.email && password === DEFAULT_ADMIN.password) {
+	// 	return Promise.resolve(DEFAULT_ADMIN);
+	// }
+
 };
 
 AdminJS.registerAdapter({
@@ -46,8 +56,20 @@ AdminJS.registerAdapter({
 
 // 	return req;
 // };
-
+const locale = {
+    translations: {
+      labels: {
+        // change Heading for Login
+        // loginWelcome: '',
+      },
+      messages: {
+        loginWelcome: 'to the admin page for Muffin QA forum! To continue, please provide admin credentials.',
+      },
+    },
+  };
 const admin = new AdminJS({
+// 	defaultTheme: dark.id,
+//   availableThemes: [dark, light, noSidebar],
 	resources: [
 		{
 			resource: db.User,
@@ -204,6 +226,12 @@ const admin = new AdminJS({
 		// // 	},
 		// // },
 	],
+    locale,
+    branding: {
+        // companyName: 'Muffin',
+    //     softwareBrothers: false,
+    //     logo: 'muf.png',
+      },
 });
 
 const adminRouter = AdminJSExpress.buildAuthenticatedRouter(

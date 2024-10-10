@@ -20,6 +20,8 @@ initializeSequelize()
     });
 
 const adminRouter = require('./admin');
+
+// app.use(express.static('assets'));
 app.use('/admin', adminRouter);
 // app.use(session({
 //     secret: cookie_secret,
