@@ -68,52 +68,114 @@ const locale = {
 
 const admin = new AdminJS({
 	resources: [
-		{
-			resource: db.User,
-			options: {
-				listProperties: ['id', 'login', 'fullName', 'email', 'role', 'rating', 'emailConfirmed'],
-				filterProperties: ['id', 'login', 'fullName', 'email', 'role', 'rating', 'emailConfirmed'],
-				editProperties: ['login', 'fullName', 'email', 'role', 'rating', 'emailConfirmed'],
-				showProperties: ['id', 'login', 'fullName', 'email', 'role', 'rating', 'emailConfirmed'],
-			},
-		},
-		{
-			resource: db.Post,
-			options: {
-				listProperties: ['id', 'title', 'status', 'content', 'createdAt', 'updatedAt', 'userId'],
-				filterProperties: ['id', 'title', 'status', 'content', 'createdAt', 'updatedAt', 'userId'],
-				editProperties: ['title', 'status', 'content', 'userId', 'categories'],
-				showProperties: ['id', 'title', 'status', 'content', 'createdAt', 'updatedAt', 'userId', 'categories'],
-				properties: {
-					categories: {
-						type: 'reference',
-						reference: 'Categories',
-						isArray: true,
-						isVisible: { list: false, filter: false, show: true, edit: true },
-					},
-					// comments: {
-					// 	type: 'reference',
-					// 	reference: 'db.Comment',
-					// 	isArray: true,
-					// 	isVisible: { list: false, filter: false, show: true, edit: false },
-					// },
-					// likes: {
-					// 	type: 'reference',
-					// 	reference: 'db.Like',
-					// 	isArray: true,
-					// 	isVisible: { list: false, filter: false, show: true, edit: false },
-					// },
-				},
-				actions: {
-					new: {
-						after: [makeRelationships],
-					},
-					edit: {
-						after: [makeRelationships],
-					},
-				},
-			},
-		},
+		// {
+		// 	resource: db.User,
+		// 	options: {
+		// 		listProperties: ['id', 'login', 'fullName', 'email', 'role', 'rating', 'emailConfirmed'],
+		// 		filterProperties: ['id', 'login', 'fullName', 'email', 'role', 'rating', 'emailConfirmed'],
+		// 		editProperties: ['login', 'fullName', 'email', 'role', 'rating', 'emailConfirmed'],
+		// 		showProperties: ['id', 'login', 'fullName', 'email', 'role', 'rating', 'emailConfirmed'],
+		// 	},
+		// },
+		// {
+		// 	resource: db.Post,
+		// 	options: {
+		// 		listProperties: ['id', 'title', 'status', 'content', 'createdAt', 'updatedAt', 'userId', 'categories'],
+		// 		filterProperties: ['id', 'title', 'status', 'content', 'createdAt', 'updatedAt', 'userId', 'categories'],
+		// 		editProperties: ['title', 'status', 'content', 'userId', 'categories'],
+		// 		showProperties: ['id', 'title', 'status', 'content', 'createdAt', 'updatedAt', 'userId', 'categories'],
+		// 		properties: {
+		// 			categories: {
+		// 				type: 'reference',
+		// 				reference: 'Categories',
+		// 				isArray: true,
+		// 				isVisible: { list: false, filter: false, show: true, edit: true },
+		// 			},
+		// 			// comments: {
+		// 			// 	type: 'reference',
+		// 			// 	reference: 'db.Comment',
+		// 			// 	isArray: true,
+		// 			// 	isVisible: { list: false, filter: false, show: true, edit: false },
+		// 			// },
+		// 			// likes: {
+		// 			// 	type: 'reference',
+		// 			// 	reference: 'db.Like',
+		// 			// 	isArray: true,
+		// 			// 	isVisible: { list: false, filter: false, show: true, edit: false },
+		// 			// },
+		// 		},
+		// 		actions: {
+		// 			actions: {
+		// 				edit: {
+		// 				  after: async (response, request, context) => {
+		// 					const { record } = context;
+		// 					if (record && record.params.id) {
+		// 					  const post = await db.Post.findByPk(record.params.id, {
+		// 						include: [
+		// 						  {
+		// 							model: db.Category,
+		// 							as: 'categories', // Указываем alias, который используется в модели
+		// 						  },
+		// 						],
+		// 					  });
+					  
+		// 					  if (post) {
+		// 						// Присваиваем категории в params
+		// 						record.params.categories = post.categories.map(category => category.id);
+		// 					  }
+		// 					}
+		// 					return response;
+		// 				  },
+		// 				},
+		// 				show: {
+		// 				  after: async (response, request, context) => {
+		// 					const { record } = context;
+		// 					if (record && record.params.id) {
+		// 					  const post = await db.Post.findByPk(record.params.id, {
+		// 						include: [
+		// 						  {
+		// 							model: db.Category,
+		// 							as: 'categories',
+		// 						  },
+		// 						],
+		// 					  });
+					  
+		// 					  if (post) {
+		// 						// Присваиваем категории в params
+		// 						record.params.categories = post.categories.map(category => category.id);
+		// 					  }
+		// 					}
+		// 					return response;
+		// 				  },
+		// 				},
+		// 				new: {
+		// 				  after: async (response, request, context) => {
+		// 					const { record } = context;
+		// 					if (record && record.params.id) {
+		// 					  const post = await db.Post.findByPk(record.params.id, {
+		// 						include: [
+		// 						  {
+		// 							model: db.Category,
+		// 							as: 'categories',
+		// 						  },
+		// 						],
+		// 					  });
+					  
+		// 					  if (post) {
+		// 						// Присваиваем категории в params
+		// 						record.params.categories = post.categories.map(category => category.id);
+		// 					  }
+		// 					}
+		// 					return response;
+		// 				  },
+		// 				},
+		// 			  },
+					
+		// 		},
+		// 	},
+		// },
+		db.User,
+		db.Post,
 		db.Category,
 		db.Comment,
 		db.Like,
