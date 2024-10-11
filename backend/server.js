@@ -4,8 +4,9 @@ const adminRouter = require('./services/adminService');
 const app = express();
 
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || 'localhost';
 
-const requiredEnvVars = ['JWT_SECRET', 'TOKEN_EXPIRATION', 'EMAIL_USER', 'EMAIL_PASS', 'FRONTEND_URL'];
+const requiredEnvVars = ['JWT_SECRET', 'TOKEN_EXPIRATION', 'EMAIL_USER', 'EMAIL_PASS'];
 
 requiredEnvVars.forEach((envVar) => {
     if (!process.env[envVar]) {
@@ -33,5 +34,5 @@ app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
 
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server is running on ${HOST}:${PORT}`);
 });

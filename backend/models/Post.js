@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
     Post.belongsTo(models.User, { as: 'user', foreignKey: 'userId'});
     Post.hasMany(models.Comment, { foreignKey: 'postId', as: 'comments', onDelete: 'CASCADE', hooks: true });
     Post.hasMany(models.Like, { foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
-    Post.belongsToMany(models.Category, { through: 'PostCategories', as: 'categories', foreignKey: 'postId' });
+    Post.belongsToMany(models.Category, { through: 'PostCategories', as: 'categories', foreignKey: 'postId', timestamps: false });
   };
 
   return Post;

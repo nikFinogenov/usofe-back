@@ -21,7 +21,7 @@ async function setupDatabase() {
 
   try {
     await client.connect();
-
+    // console.log("CONNECT OK!");
     // Step 1: Check and create the user
     const checkUserQuery = `SELECT 1 FROM pg_roles WHERE rolname = '${dbConfig.username}'`;
     const userExists = await client.query(checkUserQuery);

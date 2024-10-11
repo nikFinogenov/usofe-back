@@ -25,23 +25,36 @@ AdminJS.registerAdapter({
 
 const makeRelationships = async (req) => {
 	if (req.record.params) {
-	  const { id, Categories } = req.record.params;
-	  console.log(req.record.params);
-	  const post = await db.Post.findByPk(id);
-	  if (post) {
-		// Add categories to the post
-		// await post.setCategories(categories);
-		if (Categories && Categories.length) {
-			const categoriesToAdd = await db.Category.findAll({
-			  where: { id: Categories },
+		const { id } = req.record.params;
+		let uniqueCategories = new Set();
+
+		// Собираем уникальные категории из записи
+		for (const key in req.record.params) {
+			if (key.startsWith('categories.')) {
+				const CategoryId = req.record.params[key];
+				uniqueCategories.add(CategoryId);
+			}
+		}
+
+		try {
+			// Находим все категории по уникальным ID
+			const categories = await db.Category.findAll({
+				where: { id: Array.from(uniqueCategories) }, // Set -> Array
 			});
-			await post.setCategories(categoriesToAdd);
-		  }
-	  }
+
+			// Находим пост по ID и связываем с категориями
+			const post = await db.Post.findByPk(id);
+			if (post) {
+				await post.setCategories(categories); // Ассоциируем пост с категориями
+			}
+		} catch (err) {
+			console.error('Ошибка при установке категорий:', err);
+		}
 	}
+
 	return req;
-  };
-  
+};
+
 
 const locale = {
 	translations: {
@@ -92,12 +105,12 @@ const admin = new AdminJS({
 					// },
 				},
 				actions: {
-                    new: {
-                        after: [makeRelationships],
-                    },
-                    edit: {
-                        after: [makeRelationships],
-                    },
+					new: {
+						after: [makeRelationships],
+					},
+					edit: {
+						after: [makeRelationships],
+					},
 				},
 			},
 		},
