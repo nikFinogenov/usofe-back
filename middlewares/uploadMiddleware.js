@@ -2,11 +2,9 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Define the destination folder for uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const dir = './uploads/avatars'; // Change path as necessary
-        // Ensure the directory exists
+        const dir = './uploads/avatars';
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
@@ -18,7 +16,6 @@ const storage = multer.diskStorage({
     },
 });
 
-// File filter to only allow images
 const fileFilter = (req, file, cb) => {
     const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
     if (allowedMimeTypes.includes(file.mimetype)) {
@@ -28,12 +25,11 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-// Set limits for file size (optional)
 const upload = multer({
     storage,
     fileFilter,
     limits: {
-        fileSize: 1024 * 1024 * 5, // Limit to 5MB
+        fileSize: 1024 * 1024 * 5,
     },
 });
 

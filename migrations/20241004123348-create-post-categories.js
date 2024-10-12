@@ -1,7 +1,6 @@
 'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
-// Migration for PostCategories table
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.createTable('PostCategories', {

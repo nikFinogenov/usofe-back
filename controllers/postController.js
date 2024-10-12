@@ -155,11 +155,9 @@ exports.updatePost = async (req, res) => {
 
     if (!post) return res.status(404).json({ error: 'Post not found' });
 
-    // if (req.user.role !== 'admin') {
     if (post.userId !== req.user.id) {
       return res.status(403).json({ error: 'Unauthorized to update this post' });
     }
-    // }
 
     post.title = title || post.title;
     post.content = content || post.content;
@@ -167,7 +165,6 @@ exports.updatePost = async (req, res) => {
 
     await post.save();
 
-    // Update categories
     if (categories) {
       const updatedCategories = await db.Category.findAll({
         where: { id: categories },
@@ -187,12 +184,9 @@ exports.deletePost = async (req, res) => {
 
     if (!post) return res.status(404).json({ error: 'Post not found' });
 
-    // Check if the current user is the creator of the post
-    // if (req.user.role !== 'admin') {
     if (post.userId !== req.user.id) {
       return res.status(403).json({ error: 'Unauthorized to delete this post' });
     }
-    // }
 
     await post.destroy();
     res.status(200).json({ message: 'Post deleted successfully' });
@@ -202,7 +196,6 @@ exports.deletePost = async (req, res) => {
 };
 exports.deleteLike = async (req, res) => {
   try {
-    // console.log(req.user.id);
     const like = await db.Like.findOne({
       where: {
         postId: req.params.post_id,
@@ -212,7 +205,6 @@ exports.deleteLike = async (req, res) => {
 
     if (!like) return res.status(404).json({ error: 'Like not found' });
 
-    // await like.destroy();
     res.status(200).json({ message: 'Like removed' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to remove like' });

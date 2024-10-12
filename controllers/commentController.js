@@ -58,7 +58,7 @@ exports.createCommentLike = async (req, res) => {
 
 exports.updateComment = async (req, res) => {
   try {
-    const { content } = req.body;
+    const { content, status } = req.body;
     const comment = await db.Comment.findByPk(req.params.comment_id);
 
     if (!comment) return res.status(404).json({ error: 'Comment not found' });
@@ -67,6 +67,7 @@ exports.updateComment = async (req, res) => {
       res.status(403).json({ error: 'Unauthorized to update this comment'});
     }
     comment.content = content || comment.content;
+    comment.status = status || comment.status;
     await comment.save();
 
     res.status(200).json(comment);

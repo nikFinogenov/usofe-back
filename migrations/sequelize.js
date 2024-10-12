@@ -1,5 +1,4 @@
-// const { Sequelize } = require('sequelize');
-const { Client } = require('pg'); // Import pg client for raw SQL queries
+const { Client } = require('pg');
 const config = require('../config/config.json');
 const db = require('../models/index');
 require('dotenv').config();
@@ -8,7 +7,6 @@ const env = process.env.NODE_ENV || 'development';
 const dbConfig = config[env];
 
 async function setupDatabase() {
-  // console.log(process.env.PG_USER);
   const superuserConfig = {
     user: process.env.PG_USER || 'postgres',
     host: process.env.PG_HOST || dbConfig.host,
@@ -21,13 +19,10 @@ async function setupDatabase() {
 
   try {
     await client.connect();
-    // console.log("CONNECT OK!");
-    // Step 1: Check and create the user
     const checkUserQuery = `SELECT 1 FROM pg_roles WHERE rolname = '${dbConfig.username}'`;
     const userExists = await client.query(checkUserQuery);
 
     if (userExists.rows.length === 0) {
-      // If user does not exist, create the user
       const createUserQuery = `CREATE USER ${dbConfig.username} WITH PASSWORD '${dbConfig.password}'`;
       await client.query(createUserQuery);
       console.log(`User ${dbConfig.username} created.`);
@@ -35,12 +30,10 @@ async function setupDatabase() {
       console.log(`User ${dbConfig.username} already exists.`);
     }
 
-    // Step 2: Check and create the database
     const checkDbQuery = `SELECT 1 FROM pg_database WHERE datname = '${dbConfig.database}'`;
     const dbExists = await client.query(checkDbQuery);
 
     if (dbExists.rows.length === 0) {
-      // If database does not exist, create the database and assign ownership
       const createDbQuery = `CREATE DATABASE ${dbConfig.database} OWNER ${dbConfig.username}`;
       await client.query(createDbQuery);
       console.log(`Database ${dbConfig.database} created and assigned to user ${dbConfig.username}.`);
@@ -55,9 +48,7 @@ async function setupDatabase() {
   }
 }
 
-// Sequelize initialization function
 async function initializeSequelize() {
-  // Setup the database and user before initializing Sequelize
   await setupDatabase();
 
   try {

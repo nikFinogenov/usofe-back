@@ -1,5 +1,5 @@
 const { Model, DataTypes } = require('sequelize');
-const bcrypt = require('bcrypt'); // For hashing passwords
+const bcrypt = require('bcrypt');
 
 module.exports = (sequelize) => {
   class User extends Model {
@@ -9,7 +9,6 @@ module.exports = (sequelize) => {
       User.hasMany(models.Like, { foreignKey: 'userId', onDelete: 'CASCADE', hooks: true });
     }
 
-    // Method to check password
     checkPassword(loginPassword) {
       return bcrypt.compareSync(loginPassword, this.password);
     }
@@ -33,7 +32,7 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        len: [2, 100] // Validate length of full name
+        len: [2, 100]
       }
     },
     email: {
@@ -41,16 +40,16 @@ module.exports = (sequelize) => {
       allowNull: false,
       unique: true,
       validate: {
-        isEmail: true // Check for valid email format
+        isEmail: true
       }
     },
     profilePicture: {
       type: DataTypes.STRING,
-      allowNull: true, // URL to the profile picture
+      allowNull: true,
     },
     rating: {
       type: DataTypes.INTEGER,
-      defaultValue: 0 // Calculated from the likes/dislikes
+      defaultValue: 0
     },
     role: {
       type: DataTypes.ENUM('admin', 'user'),
@@ -68,9 +67,7 @@ module.exports = (sequelize) => {
     sequelize,
     modelName: 'User',
     hooks: {
-      // Update rating whenever a like/dislike is created or deleted
       afterUpdate: async (user, options) => {
-        // Custom logic to calculate rating
       }
     }
   });

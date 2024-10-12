@@ -3,12 +3,11 @@ const categoryController = require('../controllers/categoryController');
 const { isAuthenticated, isAdmin } = require('../middlewares/authMiddleware');
 const router = express.Router();
 
-// Create a new comment
-router.get('/', categoryController.getAllCategories);//DONE
-router.get('/:category_id', categoryController.getCategory);//DONE
-router.get('/:category_id/posts', categoryController.getCategoryPosts);//DONE
-router.post('/', isAuthenticated, isAdmin, categoryController.createCategory);//DONE
-router.patch('/:category_id', isAuthenticated, isAdmin, categoryController.updateCategory);//DONE
-router.delete('/:category_id', isAuthenticated, isAdmin, categoryController.deleteCategory);//DONE
+router.get('/', categoryController.getAllCategories);
+router.get('/:category_id', categoryController.getCategory);
+router.get('/:category_id/posts', categoryController.getCategoryPosts);
+router.post('/', isAuthenticated, isAdmin, categoryController.createCategory);
+router.patch('/:category_id', isAuthenticated, isAdmin, categoryController.updateCategory);
+router.delete('/:category_id', isAuthenticated, isAdmin, categoryController.deleteCategory);
 
 module.exports = router;
