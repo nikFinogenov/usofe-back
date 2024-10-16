@@ -77,7 +77,7 @@ Make sure you have the following installed on your machine:
     npm run dev
     ```
 
-Now, your application should be running on `http://localhost:3000`.
+Now, your application should be running on `http://localhost:3306`.
 
 ## 🔧 Running the tests <a name = "tests"></a>
 

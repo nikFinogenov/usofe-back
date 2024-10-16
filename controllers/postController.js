@@ -51,6 +51,24 @@ exports.getPost = async (req, res) => {
   }
 };
 
+exports.getRandomPost = async (req, res) => {
+  try {
+    const count = await db.Post.count();
+
+    const randomIndex = Math.floor(Math.random() * count);
+
+    const randomPost = await db.Post.findOne({ offset: randomIndex });
+
+    if (!randomPost) {
+      return res.status(404).json({ message: 'No post found' });
+    }
+
+    res.status(200).json(randomPost);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.getPostComments = async (req, res) => {
   try {
     let comments;

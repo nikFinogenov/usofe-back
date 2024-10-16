@@ -3,8 +3,8 @@ const initializeSequelize = require('./migrations/sequelize');
 const adminRouter = require('./services/adminService');
 const app = express();
 
-const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || 'localhost';
+const PORT = process.env.PORT || 3306;
+const HOST = process.env.HOST || 'http://localhost';
 
 const requiredEnvVars = ['JWT_SECRET', 'TOKEN_EXPIRATION', 'EMAIL_USER', 'EMAIL_PASS'];
 
@@ -28,6 +28,7 @@ initializeSequelize()
 app.use('/admin', adminRouter);
 
 app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/favourites', require('./routes/favouriteRoutes'));
 app.use('/api/posts', require('./routes/postRoutes'));
 app.use('/api/comments', require('./routes/commentRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));

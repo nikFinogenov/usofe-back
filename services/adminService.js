@@ -70,6 +70,7 @@ const admin = new AdminJS({
 		db.Category,
 		db.Comment,
 		db.Like,
+		db.Favourite
 	],
 	locale,
 	branding: {
