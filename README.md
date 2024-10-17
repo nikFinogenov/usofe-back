@@ -1,23 +1,22 @@
 <p align="center">
   <a href="" rel="noopener">
-    <img width=200px height=200px src="https://i.imgur.com/6wj0hh6.jpg" alt="Project logo"></a>
+    <img src="assets/muf.png" alt="Project logo"></a>
 </p>
 
-<h1 align="center">Muffin</h1>
-<h3 align="center">Q&A Forum</h3>
-
 <div align="center">
+<h3 align="center">Ask.Discuss.Answer</h3>
 
 [![Status](https://img.shields.io/badge/status-active-success.svg)]()
-[![GitHub Issues](https://img.shields.io/github/issues/kylelobo/The-Documentation-Compendium.svg)](https://github.com/kylelobo/The-Documentation-Compendium/issues)
-[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/kylelobo/The-Documentation-Compendium.svg)](https://github.com/kylelobo/The-Documentation-Compendium/pulls)
+[![GitHub Issues](https://img.shields.io/github/issues/nikFinogenov/usofe-back.svg)](https://github.com/nikFinogenov/usofe-back/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/nikFinogenov/usofe-back.svg)](https://github.com/nikFinogenov/usofe-back/pulls)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE)
 
 </div>
 
 ---
 
-<p align="center">A platform where users can ask questions and provide answers on various topics.
+<p align="center" style="font-size: 25px;">
+    <b>A platform where users can ask questions and provide answers on various topics.</b>
     <br> 
 </p>
 
@@ -25,11 +24,7 @@
 
 - [About](#about)
 - [Getting Started](#getting_started)
-- [Deployment](#deployment)
-- [Usage](#usage)
 - [Built Using](#built_using)
-- [TODO](../TODO.md)
-- [Contributing](../CONTRIBUTING.md)
 - [Authors](#authors)
 - [Acknowledgments](#acknowledgement)
 
@@ -53,35 +48,62 @@ Make sure you have the following installed on your machine:
 
 1. Clone the repository:
 
-    ```bash
-    git clone https://github.com/yourusername/muffin.git
-    ```
+   ```bash
+   git clone https://github.com/nikFinogenov/usofe-back
+   ```
 
 2. Navigate to the project directory:
 
-    ```bash
-    cd muffin
-    ```
+   ```bash
+   cd usofe-back
+   ```
 
 3. Install the required dependencies:
 
-    ```bash
-    npm install
-    ```
+   ```bash
+   npm install
+   ```
 
-4. Create a `.env` file based on the `.env.example` and fill in your environment variables.
+4. Create a `.env` file and fill in your environment variables.
+
+   You need to set up these variables:
+
+   > **These are necessary variables, server won't start without them**
+   >
+   > > - JWT_SECRET - secret for token
+   > > - EMAIL_USER - email from which confirmations will be sent
+   > > - EMAIL_PASS - password for EMAIL_USER (Not password for account, need [App password](https://knowledge.workspace.google.com/kb/how-to-create-app-passwords-000009237))
+
+   ***
+
+   > **These are variables for database init. Add them only if default values does not work for you.**
+   >
+   > > - PG_USER - role name of postgres (default value is `postgres`)
+   > > - PG_PASS - password for PG_USER (default value is `null`)
+   > > - PG_HOST - postgres host address (default value is `localhost`)
+   > > - PG_PORT - database port (default value is `5432`)
 
 5. Start the application:
 
-    ```bash
-    npm run dev
-    ```
+   ```bash
+   npm start
+   ```
 
-Now, your application should be running on `http://localhost:3306`.
+Now, API should be running on `http://localhost:3306`.
 
-## 🔧 Running the tests <a name = "tests"></a>
+## ⛏️ Built Using <a name = "built_using"></a>
 
-To run the automated tests for this project, use the following command:
+- [PostgreSQL](https://www.postgresql.org) - Database
+- [Sequelize](https://sequelize.org) - ORM
+- [Express](https://expressjs.com/) - Server Framework
+- [NodeJs](https://nodejs.org/en/) - Server Environment
+- [Postman](https://www.postman.com) - API testing Software
+- [AdminJS](https://adminjs.co) - Admin panel
 
-```bash
-npm test
+## ✍️ Authors <a name = "authors"></a>
+
+- [@nikFinogenov](https://github.com/nikFinogenov) - Idea & Initial work
+
+## 🎉 Acknowledgements <a name = "acknowledgement"></a>
+
+- Why project is named Muffin will be revealed in front end part.

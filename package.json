@@ -2,7 +2,7 @@
   "name": "muffin",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "dependencies": {
     "@adminjs/express": "^5.1.0",
     "@adminjs/sequelize": "^3.0.0",
@@ -26,9 +26,10 @@
   },
   "devDependencies": {},
   "scripts": {
+    "start": "node server.js",
     "db.drop": "node migrations/db.drop.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC"
+  "author": "Nik Fin",
+  "license": "MIT"
 }

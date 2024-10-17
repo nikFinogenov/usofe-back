@@ -1,18 +1,18 @@
-const { Client } = require('pg');
-const config = require('../config/config.json');
-const db = require('../models/index');
-require('dotenv').config();
+const { Client } = require("pg");
+const config = require("../config/config.json");
+const db = require("../models/index");
+require("dotenv").config();
 
-const env = process.env.NODE_ENV || 'development';
+const env = process.env.NODE_ENV || "development";
 const dbConfig = config[env];
 
 async function setupDatabase() {
   const superuserConfig = {
-    user: process.env.PG_USER || 'postgres',
+    user: process.env.PG_USER || "postgres",
     host: process.env.PG_HOST || dbConfig.host,
-    password: process.env.PG_SUPERUSER_PASSWORD || null,
+    password: process.env.PG_PASS || null,
     port: process.env.PG_PORT || 5432,
-    database: 'postgres',
+    database: "postgres",
   };
 
   const client = new Client(superuserConfig);
@@ -36,13 +36,14 @@ async function setupDatabase() {
     if (dbExists.rows.length === 0) {
       const createDbQuery = `CREATE DATABASE ${dbConfig.database} OWNER ${dbConfig.username}`;
       await client.query(createDbQuery);
-      console.log(`Database ${dbConfig.database} created and assigned to user ${dbConfig.username}.`);
+      console.log(
+        `Database ${dbConfig.database} created and assigned to user ${dbConfig.username}.`
+      );
     } else {
       console.log(`Database ${dbConfig.database} already exists.`);
     }
-
   } catch (err) {
-    console.error('Error setting up database:', err);
+    console.error("Error setting up database:", err);
   } finally {
     await client.end();
   }
@@ -53,10 +54,10 @@ async function initializeSequelize() {
 
   try {
     await db.sequelize.authenticate();
-    console.log('Database connected successfully.');
+    console.log("Database connected successfully.");
     await db.sequelize.sync();
   } catch (error) {
-    console.error('Unable to connect to the database:', error);
+    console.error("Unable to connect to the database:", error);
   }
 
   return db.sequelize;
