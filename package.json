@@ -6,6 +6,7 @@
   "dependencies": {
     "@adminjs/express": "^5.1.0",
     "@adminjs/sequelize": "^3.0.0",
+    "@faker-js/faker": "^9.0.3",
     "@tiptap/extension-text-style": "^2.8.0",
     "adminjs": "^6.8.7",
     "bcrypt": "^5.1.1",
@@ -22,14 +23,17 @@
     "sequelize": "^6.37.3",
     "sequelize-admin": "0.0.0",
     "sequelize-cli": "^6.6.2",
+    "swagger-ui-express": "^5.0.1",
     "tslib": "^2.7.0"
   },
-  "devDependencies": {},
   "scripts": {
     "start": "node server.js",
-    "db.drop": "node migrations/db.drop.js",
+    "drop": "node migrations/drop.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Nik Fin",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "swagger-autogen": "^2.23.7"
+  }
 }

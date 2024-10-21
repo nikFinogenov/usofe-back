@@ -1,6 +1,8 @@
 const express = require("express");
-const initializeSequelize = require("./migrations/sequelize");
+const initializeSequelize = require("./migrations/init");
 const adminRouter = require("./services/adminService");
+const path = require("path");
+
 const app = express();
 
 const PORT = process.env.PORT || 3306;
@@ -33,6 +35,10 @@ app.use("/api/posts", require("./routes/postRoutes"));
 app.use("/api/comments", require("./routes/commentRoutes"));
 app.use("/api/categories", require("./routes/categoryRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "assets", "index.html"));
+});
 
 app.listen(PORT, () => {
   console.log(`Server is running on ${HOST}:${PORT}`);
