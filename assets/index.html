@@ -17,19 +17,22 @@
       color: #4CAF50;
     }
 
-    .credentials {
+    #credentials,
+    #links {
       background-color: #fff;
       padding: 10px;
       border-radius: 5px;
       box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
     }
 
-    .credentials p {
+    #credentials p,
+    #links p {
       margin: 0;
+      padding-bottom: 5px;
       font-weight: bold;
     }
 
-    .credentials span {
+    #credentials span {
       color: #d9534f;
     }
   </style>
@@ -37,7 +40,12 @@
 
 <body>
   <h1>Welcome to the API!</h1>
-  <div class="credentials">
+  <div id="links">
+    <p>Admin panel: <a href="http://localhost:3306/admin">http://localhost:3306/admin</a></p>
+    <p>Swagger doc: <a href="http://localhost:3306/api-docs">http://localhost:3306/api-docs</a></p>
+  </div>
+  <br>
+  <div id="credentials">
     <p>Temp Admin Email: <span>qwerty@gmail.com</span></p>
     <p>Password: <span>qwerty</span></p>
   </div>

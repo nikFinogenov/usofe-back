@@ -1,6 +1,8 @@
 const express = require("express");
 const initializeSequelize = require("./migrations/init");
 const adminRouter = require("./services/adminService");
+const swaggerUI = require("swagger-ui-express");
+const swaggerDocument = require("./swagger-output.json");
 const path = require("path");
 
 const app = express();
@@ -39,6 +41,7 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "assets", "index.html"));
 });
+app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerDocument));
 
 app.listen(PORT, () => {
   console.log(`Server is running on ${HOST}:${PORT}`);
