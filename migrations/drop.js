@@ -21,7 +21,6 @@ async function dropDatabase() {
     await client.connect();
     console.log(`Connected to PostgreSQL as ${superuserConfig.user}`);
 
-    // Check if the database exists
     const checkDbQuery = `SELECT 1 FROM pg_database WHERE datname = '${dbConfig.database}'`;
     const dbExists = await client.query(checkDbQuery);
 
@@ -47,7 +46,6 @@ async function dropDatabase() {
       console.log(`Database '${dbConfig.database}' has been dropped.`);
     }
 
-    // Check if the user exists
     const checkUserQuery = `SELECT 1 FROM pg_roles WHERE rolname = '${dbConfig.username}'`;
     const userExists = await client.query(checkUserQuery);
 
