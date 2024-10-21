@@ -1,28 +1,37 @@
-const { where } = require("sequelize");
+const { Op } = require("sequelize");
 const db = require("../models");
+const jwt = require('jsonwebtoken');
+const { tr } = require("@faker-js/faker");
 
 exports.getAllPosts = async (req, res) => {
-  const { page = 1, pageSize = 10 } = req.query;
+  const {
+    page = 1,
+    pageSize = 10,
+    sortBy = 'createdAt',
+    order = 'DESC',
+    status = 'active'
+  } = req.query;
 
   try {
     const offset = (page - 1) * pageSize;
     let posts;
-    if (req.user.role === "admin") {
-      posts = await db.Post.findAndCountAll({
-        limit: parseInt(pageSize),
-        offset: parseInt(offset),
-        include: ["categories", "user"],
-      });
-    } else {
-      posts = await db.Post.findAndCountAll({
-        limit: parseInt(pageSize),
-        offset: parseInt(offset),
-        include: ["categories", "user"],
-        where: {
-          status: "active",
-        },
-      });
+
+    const where = {};
+
+    if (status) {
+      where.status = status;
     }
+
+    const orderBy = [[sortBy, order.toUpperCase()]];
+
+    posts = await db.Post.findAndCountAll({
+      where,
+      limit: parseInt(pageSize),
+      offset: parseInt(offset),
+      include: ["categories", "user"],
+      order: orderBy,
+    });
+
 
     res.status(200).json({
       posts: posts.rows,
@@ -31,10 +40,10 @@ exports.getAllPosts = async (req, res) => {
       currentPage: parseInt(page),
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Failed to retrieve posts" });
   }
 };
-
 exports.getPost = async (req, res) => {
   try {
     const post = await db.Post.findByPk(req.params.post_id, {
@@ -69,23 +78,37 @@ exports.getRandomPost = async (req, res) => {
 
 exports.getPostComments = async (req, res) => {
   try {
-    let comments;
-    if (req.user.role === "admin") {
-      comments = await db.Comment.findAll({
-        where: { postId: req.params.post_id },
-        include: ["user"],
-      });
+    const postId = req.params.post_id;
+    const authToken = req.headers.authorization;
+    const whereCondition = { postId };
+    const post = await db.Post.findByPk(postId);
+
+    if (authToken) { 
+      try {
+        req.user = jwt.verify(authToken.split(' ')[1], process.env.JWT_SECRET);
+        if (req.user.role !== "admin" && req.user.id !== post.userId) {
+          whereCondition.status = "active";
+        }
+      }
+      catch {
+        whereCondition.status = "active";
+      }
     } else {
-      comments = await db.Comment.findAll({
-        where: { postId: req.params.post_id, status: "active" },
-        include: ["user"],
-      });
+      whereCondition.status = "active";
     }
+
+    const comments = await db.Comment.findAll({
+      where: whereCondition,
+      include: ["user"],
+    });
+
     res.status(200).json(comments);
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Failed to retrieve comments" });
   }
 };
+
 
 exports.createComment = async (req, res) => {
   try {
@@ -153,15 +176,15 @@ exports.createLike = async (req, res) => {
   try {
     const post = await db.Post.findByPk(req.params.post_id);
     const { type } = req.body
-    if (!type || (type !== "dislike" && type !== "like")) return res.status(404).json({ error: 'Type not found' });   
-    if (!post) return res.status(404).json({ error: 'Post not found' });   
+    if (!type || (type !== "dislike" && type !== "like")) return res.status(404).json({ error: 'Type not found' });
+    if (!post) return res.status(404).json({ error: 'Post not found' });
     const existingLike = await db.Like.findOne({
       where: {
         userId: req.user.id,
         postId: req.params.post_id
       }
-    }); 
-    if(existingLike) {
+    });
+    if (existingLike) {
       if (existingLike.type !== type) {
         existingLike.type = type;
         await existingLike.save();
@@ -179,7 +202,7 @@ exports.createLike = async (req, res) => {
       userId: req.user.id,
       type: type,
     });
-    
+
     await db.User.increment("rating", {
       by: type == "dislike" ? -1 : 1,
       where: { id: post.userId },
