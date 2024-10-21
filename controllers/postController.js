@@ -151,14 +151,38 @@ exports.createPost = async (req, res) => {
 
 exports.createLike = async (req, res) => {
   try {
+    const post = await db.Post.findByPk(req.params.post_id);
+    const { type } = req.body
+    if (!type || (type !== "dislike" && type !== "like")) return res.status(404).json({ error: 'Type not found' });   
+    if (!post) return res.status(404).json({ error: 'Post not found' });   
+    const existingLike = await db.Like.findOne({
+      where: {
+        userId: req.user.id,
+        postId: req.params.post_id
+      }
+    }); 
+    if(existingLike) {
+      if (existingLike.type !== type) {
+        existingLike.type = type;
+        await existingLike.save();
+        await db.User.increment("rating", {
+          by: existingLike.type == "dislike" ? -2 : 2,
+          where: { id: post.userId },
+        });
+        return res.status(200).json({ message: 'Like type updated successfully', like: existingLike });
+      } else {
+        return res.status(400).json({ error: 'You have already liked this comment with the same type' });
+      }
+    }
     const like = await db.Like.create({
       postId: req.params.post_id,
       userId: req.user.id,
-      type: "like",
+      type: type,
     });
+    
     await db.User.increment("rating", {
-      by: 1,
-      where: { id: req.user.id },
+      by: type == "dislike" ? -1 : 1,
+      where: { id: post.userId },
     });
 
     res.status(201).json(like);
@@ -229,10 +253,10 @@ exports.deleteLike = async (req, res) => {
     if (!like) return res.status(404).json({ error: "Like not found" });
 
     await like.destroy();
-
+    const post = await db.Post.findByPk(req.params.post_id);
     await db.User.increment("rating", {
       by: -1,
-      where: { id: req.user.id },
+      where: { id: post.userId },
     });
 
     res.status(200).json({ message: "Like removed and rating updated" });
