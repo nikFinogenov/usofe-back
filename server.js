@@ -2,7 +2,7 @@ const express = require("express");
 const initializeSequelize = require("./migrations/init");
 const adminRouter = require("./services/adminService");
 const swaggerUI = require("swagger-ui-express");
-const swaggerDocument = require("./swagger-output.json");
+const swaggerDocument = require("./swagger.json");
 const path = require("path");
 
 const app = express();
