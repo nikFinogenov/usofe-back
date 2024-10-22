@@ -40,9 +40,16 @@ These instructions will help you set up a local development environment for Muff
 
 Make sure you have the following installed on your machine:
 
-- Node.js (v14 or higher)
+- Node.js (v20 or higher)
 - npm (Node Package Manager)
 - A database (Postgres)
+You can verify the installation and versions by running:
+
+```bash
+node -v
+npm -v
+psql --version
+```
 
 ### Installing
 

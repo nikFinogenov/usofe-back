@@ -6,6 +6,26 @@ const { sendConfirmationEmail, sendResetEmail } = require('../services/emailServ
 const JWT_SECRET = process.env.JWT_SECRET;
 const TOKEN_EXPIRATION = process.env.TOKEN_EXPIRATION || '1h';
 const FRONTEND_URL = `${process.env.HOST}:${process.env.PORT}` || 'http://localhost:3306'
+function funrandomPic() {
+    const commonPictures = [
+        'uploads/avatars/face_1.png',
+        'uploads/avatars/face_2.png',
+        'uploads/avatars/face_3.png',
+    ];
+    
+    const rarePictures = [
+        'uploads/avatars/face_4.png',
+        'uploads/avatars/face_5.png',
+    ];
+
+    const randomNumber = Math.floor(Math.random() * 100);
+
+    if (randomNumber < 5) {
+        return rarePictures[Math.floor(Math.random() * rarePictures.length)];
+    } else {
+        return commonPictures[Math.floor(Math.random() * commonPictures.length)];
+    }
+}
 
 exports.register = async (req, res) => {
     try {
@@ -24,6 +44,7 @@ exports.register = async (req, res) => {
             password,
             fullName,
             role: 'user',
+            profilePicture: funrandomPic(),
         });
 
         const confirmationToken = jwt.sign({ email: newUser.email }, JWT_SECRET, { expiresIn: '7d' });

@@ -108,8 +108,6 @@ exports.getPostComments = async (req, res) => {
     res.status(500).json({ error: "Failed to retrieve comments" });
   }
 };
-
-
 exports.createComment = async (req, res) => {
   try {
     const { content } = req.body;
@@ -220,16 +218,18 @@ exports.updatePost = async (req, res) => {
     const post = await db.Post.findByPk(req.params.post_id);
 
     if (!post) return res.status(404).json({ error: "Post not found" });
-
-    if (post.userId !== req.user.id) {
-      return res
-        .status(403)
-        .json({ error: "Unauthorized to update this post" });
+    if(req.user.role !== "admin") {
+      if (post.userId !== req.user.id) {
+        return res
+          .status(403)
+          .json({ error: "Unauthorized to update this post" });
+      }
+      post.title = title || post.title;
+      post.content = content || post.content;
     }
-
-    post.title = title || post.title;
-    post.content = content || post.content;
-    post.status = status || post.status;
+    else {
+      post.status = status || post.status;
+    }
 
     await post.save();
 
@@ -252,7 +252,7 @@ exports.deletePost = async (req, res) => {
 
     if (!post) return res.status(404).json({ error: "Post not found" });
 
-    if (post.userId !== req.user.id) {
+    if (post.userId !== req.user.id && req.user.role !== "admin") {
       return res
         .status(403)
         .json({ error: "Unauthorized to delete this post" });
