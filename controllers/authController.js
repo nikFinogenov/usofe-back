@@ -5,7 +5,7 @@ const { sendConfirmationEmail, sendResetEmail } = require('../services/emailServ
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const TOKEN_EXPIRATION = process.env.TOKEN_EXPIRATION || '1h';
-const FRONTEND_URL = `${process.env.HOST}:${process.env.PORT}` || 'http://localhost:3306'
+const FRONTEND_URL = process.env.HOST && process.env.PORT ? `${process.env.HOST}:${process.env.PORT}` : 'http://localhost:3306'
 function funrandomPic() {
     const commonPictures = [
         'uploads/avatars/face_1.png',
