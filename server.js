@@ -4,11 +4,13 @@ const adminRouter = require("./services/adminService");
 const swaggerUI = require("swagger-ui-express");
 const swaggerDocument = require("./swagger.json");
 const path = require("path");
+const cors = require("cors");
 
 const app = express();
 
 const PORT = process.env.PORT || 3306;
 const HOST = process.env.HOST || "http://localhost";
+const FRONT_URL = process.env.FRONT || 'http://localhost:3000'
 
 const requiredEnvVars = ["JWT_SECRET", "EMAIL_USER", "EMAIL_PASS"];
 
@@ -30,6 +32,10 @@ initializeSequelize()
   });
 
 app.use("/admin", adminRouter);
+
+app.use(cors({
+  origin: FRONT_URL
+}));
 
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/favourites", require("./routes/favouriteRoutes"));

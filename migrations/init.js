@@ -46,13 +46,19 @@ async function setupDatabase() {
   }
 }
 
-const MODEL_AMOUNT = 5;
+// const MODEL_AMOUNT = 5;
+const USER_AMOUNT = 15;
+const POST_AMOUNT = 100;
+const CATEGORY_AMOUNT = 10;
+const COMMENT_AMOUNT = 240;
+const LIKE_COMMENT_AMOUNT = 100;
+const LIKE_POST_AMOUNT = 55;
 
 async function seedDatabase() {
   try {
     const userCount = await db.User.count();
-    if (userCount < MODEL_AMOUNT) {
-      const usersToCreate = MODEL_AMOUNT - userCount;
+    if (userCount < USER_AMOUNT) {
+      const usersToCreate = USER_AMOUNT - userCount;
       for (let i = 0; i < usersToCreate; i++) {
         await db.User.create({
           login: faker.internet.userName(),
@@ -84,8 +90,8 @@ async function seedDatabase() {
 
     const categoryCount = await db.Category.count();
     const categories = [];
-    if (categoryCount < MODEL_AMOUNT) {
-      const categoriesToCreate = MODEL_AMOUNT - categoryCount;
+    if (categoryCount < CATEGORY_AMOUNT) {
+      const categoriesToCreate = CATEGORY_AMOUNT - categoryCount;
       for (let i = 0; i < categoriesToCreate; i++) {
         const category = await db.Category.create({
           title: faker.lorem.word(),
@@ -97,41 +103,65 @@ async function seedDatabase() {
     }
 
     const postCount = await db.Post.count();
-    if (postCount < MODEL_AMOUNT) {
-      const postsToCreate = MODEL_AMOUNT - postCount;
+    if (postCount < POST_AMOUNT) {
+      const postsToCreate = POST_AMOUNT - postCount;
       for (let i = 0; i < postsToCreate; i++) {
         const post = await db.Post.create({
           title: faker.lorem.sentence(),
           content: faker.lorem.paragraph(),
-          userId: Math.floor(Math.random() * MODEL_AMOUNT) + 1,
+          userId: Math.floor(Math.random() * USER_AMOUNT) + 1,
         });
-        const randomCategories = faker.helpers.arrayElements(categories, Math.floor(Math.random() * MODEL_AMOUNT) + 1);
+        const randomCategories = faker.helpers.arrayElements(categories, Math.floor(Math.random() * CATEGORY_AMOUNT) + 1);
         await post.addCategories(randomCategories);
       }
       console.log(`${postsToCreate} posts created.`);
     }
 
     const commentCount = await db.Comment.count();
-    if (commentCount < MODEL_AMOUNT) {
-      const commentsToCreate = MODEL_AMOUNT - commentCount;
+    if (commentCount < COMMENT_AMOUNT) {
+      const commentsToCreate = COMMENT_AMOUNT - commentCount;
       for (let i = 0; i < commentsToCreate; i++) {
         await db.Comment.create({
           content: faker.lorem.sentence(),
-          userId: Math.floor(Math.random() * MODEL_AMOUNT) + 1,
-          postId: Math.floor(Math.random() * MODEL_AMOUNT) + 1,
+          userId: Math.floor(Math.random() * USER_AMOUNT) + 1,
+          postId: Math.floor(Math.random() * POST_AMOUNT) + 1,
         });
       }
       console.log(`${commentsToCreate} comments created.`);
     }
 
-    const likeCount = await db.Like.count();
-    if (likeCount < MODEL_AMOUNT) {
-      const likesToCreate = MODEL_AMOUNT - likeCount;
+    const likeCount = await db.Like.count({
+      where: {
+        postId: {
+          [db.Sequelize.Op.ne]: null
+        }
+      }
+    });
+    if (likeCount < LIKE_POST_AMOUNT) {
+      const likesToCreate = LIKE_POST_AMOUNT - likeCount;
       for (let i = 0; i < likesToCreate; i++) {
         await db.Like.create({
           type: Math.random() < 0.5 ? "like" : "dislike",
-          userId: Math.floor(Math.random() * MODEL_AMOUNT) + 1,
-          postId: Math.floor(Math.random() * MODEL_AMOUNT) + 1,
+          userId: Math.floor(Math.random() * USER_AMOUNT) + 1,
+          postId: Math.floor(Math.random() * POST_AMOUNT) + 1,
+        });
+      }
+      console.log(`${likesToCreate} likes created.`);
+    }
+    const likeCountComments = await db.Like.count({
+      where: {
+        commentId: {
+          [db.Sequelize.Op.ne]: null
+        }
+      }
+    });
+    if (likeCountComments < LIKE_COMMENT_AMOUNT) {
+      const likesToCreate = LIKE_COMMENT_AMOUNT - likeCountComments;
+      for (let i = 0; i < likesToCreate; i++) {
+        await db.Like.create({
+          type: Math.random() < 0.5 ? "like" : "dislike",
+          userId: Math.floor(Math.random() * USER_AMOUNT) + 1,
+          commentId: Math.floor(Math.random() * COMMENT_AMOUNT) + 1,
         });
       }
       console.log(`${likesToCreate} likes created.`);
