@@ -36,8 +36,8 @@ exports.getAllPosts = async (req, res) => {
     res.status(200).json({
       posts: posts.rows,
       totalPosts: posts.rows.length,
-      totalPages: Math.ceil(posts.rows.length / pageSize),
-      currentPage: parseInt(page),
+      // totalPages: Math.ceil(posts.rows.length / pageSize),
+      // currentPage: parseInt(page),
     });
   } catch (error) {
     console.log(error);
