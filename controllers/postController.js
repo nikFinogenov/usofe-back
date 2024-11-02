@@ -29,6 +29,13 @@ exports.getAllPosts = async (req, res) => {
       // limit: parseInt(pageSize),
       // offset: parseInt(offset),
       include: ["categories", "user"],
+      attributes: {
+        include: [
+          [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Comments" WHERE "Comments"."postId" = "Post"."id")`), 'commentCount'],
+          [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'like')`), 'likeCount'],
+          [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'dislike')`), 'dislikeCount']
+        ]
+      },
       order: orderBy,
     });
     
@@ -48,6 +55,9 @@ exports.getPost = async (req, res) => {
   try {
     const post = await db.Post.findByPk(req.params.post_id, {
       include: ["categories", "user", "comments"],
+    });
+    await post.increment("views", {
+      by: 1
     });
 
     if (!post) return res.status(404).json({ error: "Post not found" });

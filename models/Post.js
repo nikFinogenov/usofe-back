@@ -15,13 +15,17 @@ module.exports = (sequelize, DataTypes) => {
     status: {
       type: DataTypes.ENUM('active', 'inactive'),
       defaultValue: 'active'
+    },    
+    views: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
     }
   }, {});
 
   Post.associate = function (models) {
     Post.belongsTo(models.User, { as: 'user', foreignKey: 'userId'});
     Post.hasMany(models.Comment, { foreignKey: 'postId', as: 'comments', onDelete: 'CASCADE', hooks: true });
-    Post.hasMany(models.Like, { foreignKey: 'postId', onDelete: 'CASCADE', hooks: true });
+    Post.hasMany(models.Like, { foreignKey: 'postId', as: 'likes', onDelete: 'CASCADE', hooks: true });
     Post.belongsToMany(models.Category, { through: 'PostCategories', as: 'categories', foreignKey: 'postId', timestamps: false });
   };
 
