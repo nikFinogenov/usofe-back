@@ -54,7 +54,16 @@ exports.getAllPosts = async (req, res) => {
 exports.getPost = async (req, res) => {
   try {
     const post = await db.Post.findByPk(req.params.post_id, {
-      include: ["categories", "user", "comments"],
+      include: [
+        "categories",
+        "user",
+        {
+          model: db.Comment,
+          as: "comments",
+          include: ["likes"] // Получаем лайки, связанные с комментариями
+        },
+        "likes"
+      ],
     });
     await post.increment("views", {
       by: 1
