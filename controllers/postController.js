@@ -5,15 +5,15 @@ const { tr } = require("@faker-js/faker");
 
 exports.getAllPosts = async (req, res) => {
   const {
-    // page = 1,
-    // pageSize = 10,
+    page = 1,
+    pageSize = 12,
     sortBy = 'createdAt',
     order = 'DESC',
     status = 'active'
   } = req.query;
 
   try {
-    // const offset = (page - 1) * pageSize;
+    const offset = (page - 1) * pageSize;
     let posts;
 
     const where = {};
@@ -26,8 +26,8 @@ exports.getAllPosts = async (req, res) => {
 
     posts = await db.Post.findAndCountAll({
       where,
-      // limit: parseInt(pageSize),
-      // offset: parseInt(offset),
+      limit: parseInt(pageSize),
+      offset: parseInt(offset),
       include: ["categories", "user"],
       attributes: {
         include: [
@@ -42,9 +42,9 @@ exports.getAllPosts = async (req, res) => {
 
     res.status(200).json({
       posts: posts.rows,
-      totalPosts: posts.rows.length,
-      // totalPages: Math.ceil(posts.rows.length / pageSize),
-      // currentPage: parseInt(page),
+      totalPosts: posts.count,
+      totalPages: Math.ceil(posts.rows.length / pageSize),
+      currentPage: parseInt(page),
     });
   } catch (error) {
     console.log(error);
