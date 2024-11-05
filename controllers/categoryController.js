@@ -2,9 +2,18 @@ const db = require("../models");
 
 exports.getAllCategories = async (req, res) => {
   try {
-    const categories = await db.Category.findAll();
+    const categories = await db.Category.findAll(
+      {
+        attributes: {
+          include: [
+            [db.Sequelize.literal(`(SELECT COUNT(*) FROM "PostCategories" WHERE "PostCategories"."categoryId" = "Category"."id")`), 'postCount'],
+          ]
+        },
+      }
+    );
     res.status(200).json(categories);
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Failed to retrieve categories" });
   }
 };

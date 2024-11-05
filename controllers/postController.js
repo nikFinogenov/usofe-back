@@ -60,7 +60,7 @@ exports.getPost = async (req, res) => {
         {
           model: db.Comment,
           as: "comments",
-          include: ["likes"] // Получаем лайки, связанные с комментариями
+          include: ["likes", "user"] // Получаем лайки, связанные с комментариями
         },
         "likes"
       ],
