@@ -48,7 +48,7 @@ async function setupDatabase() {
 
 // const MODEL_AMOUNT = 5;
 const USER_AMOUNT = 15;
-const POST_AMOUNT = 100;
+const POST_AMOUNT = 500;
 const CATEGORY_AMOUNT = 10;
 const COMMENT_AMOUNT = 240;
 const LIKE_COMMENT_AMOUNT = 100;

@@ -37,6 +37,7 @@ exports.getAllPosts = async (req, res) => {
         ]
       },
       order: orderBy,
+      distinct: true
     });
     
 
