@@ -129,10 +129,14 @@ exports.confirmPasswordReset = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
-
-        user.password = newPassword;
-        user.confirmationToken = null;
-        await user.save();
+        if(user.confirmationToken === confirmToken) {
+            user.confirmationToken = null;
+            user.password = newPassword;
+            await user.save();
+        }
+        else {
+            res.status(400).json({ error: 'Invalid or expired token' });
+        }
 
         res.status(200).json({ message: 'Password updated successfully' });
     } catch (error) {
@@ -152,8 +156,15 @@ exports.confirmEmail = async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        user.emailConfirmed = true;
-        user.confirmationToken = null;
+        if(user.confirmationToken === confirmToken) {
+            user.emailConfirmed = true;
+            user.confirmationToken = null;
+            await user.save();
+        }
+        else {
+            res.status(400).json({ error: 'Invalid or expired token' });
+        }
+
         await user.save();
 
         res.status(200).json({ message: 'Email confirmed successfully' });
