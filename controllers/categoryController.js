@@ -59,57 +59,62 @@ exports.getCategoryPosts = async (req, res) => {
 
   try {
     const offset = (page - 1) * pageSize;
+    const where = {};
 
-    const category = await db.Category.findByPk(req.params.category_id,  {
+    if (status) {
+      where.status = status;
+    }
+
+    const orderBy = [[sortBy, order.toUpperCase()]];
+
+    const category = await db.Category.findByPk(req.params.category_id, {
+      where,
+      limit: parseInt(pageSize),
+      offset: parseInt(offset),
       include: [
         {
-          model: db.Post, 
-          as:'posts',
-          through:{ attributes: []},
+          model: db.Post,
+          as: 'posts',
+          through: { attributes: [] },
           include: [
             {
               model: db.User,
-              as:'user',
-              attributes: ['id', 'fullName', 'login']
+              as: 'user',
+              attributes: ['id', 'fullName', 'login', "profilePicture"]
             },
             {
               model: db.Category,
-              as:'categories',
+              as: 'categories',
               attributes: ['id', 'title'],
               through: { attributes: [] }
             }
           ]
+          ,
+          attributes: {
+            include: [
+              [db.Sequelize.literal(`
+            (SELECT COUNT(*) 
+             FROM "Comments" AS reply 
+             WHERE "reply"."postId" = "posts"."id" 
+             AND "reply"."status" = 'active' 
+             AND ("reply"."replyId" IS NULL OR EXISTS (
+                 SELECT 1 
+                 FROM "Comments" AS parent 
+                 WHERE parent."id" = reply."replyId" 
+                 AND parent."status" = 'active'
+             ))
+            )
+        `), 'commentCount'],
+              [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "posts"."id" AND "Likes"."type" = 'like')`), 'likeCount'],
+              [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "posts"."id" AND "Likes"."type" = 'dislike')`), 'dislikeCount']
+            ]
+          },
         }
-      ]
+      ],
+      order: orderBy,
+      distinct: true
     });
     if (!category) return res.status(404).json({ error: "Category not found" });
-
-    // const posts = await db.Post.findAndCountAll({
-    //   where: {
-    //     status,
-    //   },
-    //   limit: parseInt(pageSize),
-    //   offset: parseInt(offset),
-    //   include: [
-    //     {
-    //       model: db.Category,
-    //       as: 'categories',
-    //       where: { id: category.id },
-    //       through: { attributes: [] },
-    //     }
-    //     "user"
-    //   ],
-    //   attributes: {
-    //     include: [
-    //       [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Comments" WHERE "Comments"."postId" = "Post"."id")`), 'commentCount'],
-    //       [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'like')`), 'likeCount'],
-    //       [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'dislike')`), 'dislikeCount']
-    //     ]
-    //   },
-    //   order: [[sortBy, order.toUpperCase()]],
-    //   distinct: true
-    // });
-    console.log(category.posts)
     res.status(200).json({
       title: category.title,
       posts: category.posts,
