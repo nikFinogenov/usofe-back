@@ -30,23 +30,58 @@ exports.getCategory = async (req, res) => {
 };
 
 exports.getCategoryPosts = async (req, res) => {
+  const {
+    page = 1,
+    pageSize = 12,
+    sortBy = 'createdAt',
+    order = 'DESC',
+    status = 'active'
+  } = req.query;
+
   try {
-    const category = await db.Category.findByPk(req.params.category_id, {
-      include: [
-        {
-          model: db.Post,
-          as: "posts",
-          through: { attributes: [] },
-        },
-      ],
-    });
+    const offset = (page - 1) * pageSize;
+
+    const category = await db.Category.findByPk(req.params.category_id);
     if (!category) return res.status(404).json({ error: "Category not found" });
 
-    res.status(200).json(category.posts);
+    const posts = await db.Post.findAndCountAll({
+      where: {
+        status,
+      },
+      limit: parseInt(pageSize),
+      offset: parseInt(offset),
+      include: [
+        {
+          model: db.Category,
+          as: "categories",
+          where: { id: category.id },
+          through: { attributes: [] },
+        },
+        "user"
+      ],
+      attributes: {
+        include: [
+          [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Comments" WHERE "Comments"."postId" = "Post"."id")`), 'commentCount'],
+          [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'like')`), 'likeCount'],
+          [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'dislike')`), 'dislikeCount']
+        ]
+      },
+      order: [[sortBy, order.toUpperCase()]],
+      distinct: true
+    });
+
+    res.status(200).json({
+      posts: posts.rows,
+      totalPosts: posts.count,
+      totalPages: Math.ceil(posts.count / pageSize),
+      currentPage: parseInt(page),
+    });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Failed to retrieve posts for category" });
   }
 };
+
 
 exports.createCategory = async (req, res) => {
   try {

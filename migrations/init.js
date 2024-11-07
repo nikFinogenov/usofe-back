@@ -53,6 +53,7 @@ const CATEGORY_AMOUNT = 10;
 const COMMENT_AMOUNT = 240;
 const LIKE_COMMENT_AMOUNT = 100;
 const LIKE_POST_AMOUNT = 55;
+const FAVOURITES_AMOUNT = 50;
 
 async function seedDatabase() {
   try {
@@ -115,6 +116,18 @@ async function seedDatabase() {
         await post.addCategories(randomCategories);
       }
       console.log(`${postsToCreate} posts created.`);
+    }
+
+    const favCount = await db.Favourite.count();
+    if(favCount < FAVOURITES_AMOUNT) {
+      const favToCreate = FAVOURITES_AMOUNT - favCount;
+      for(let i = 0; i < favToCreate; i++) {
+        const fav = await db.Favourite.create({
+          userId: Math.floor(Math.random() * USER_AMOUNT) + 1,
+          postId: Math.floor(Math.random() * POST_AMOUNT) + 1,
+        })
+      }
+      console.log(`${favToCreate} favourites created.`);
     }
 
     const commentCount = await db.Comment.count();
