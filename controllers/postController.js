@@ -31,7 +31,19 @@ exports.getAllPosts = async (req, res) => {
       include: ["categories", "user"],
       attributes: {
         include: [
-          [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Comments" WHERE "Comments"."postId" = "Post"."id")`), 'commentCount'],
+          [db.Sequelize.literal(`
+            (SELECT COUNT(*) 
+             FROM "Comments" AS reply 
+             WHERE "reply"."postId" = "Post"."id" 
+             AND "reply"."status" = 'active' 
+             AND ("reply"."replyId" IS NULL OR EXISTS (
+                 SELECT 1 
+                 FROM "Comments" AS parent 
+                 WHERE parent."id" = reply."replyId" 
+                 AND parent."status" = 'active'
+             ))
+            )
+        `), 'commentCount'],             
           [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'like')`), 'likeCount'],
           [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'dislike')`), 'dislikeCount']
         ]
@@ -44,7 +56,7 @@ exports.getAllPosts = async (req, res) => {
     res.status(200).json({
       posts: posts.rows,
       totalPosts: posts.count,
-      totalPages: Math.ceil(posts.rows.length / pageSize),
+      totalPages: Math.ceil(posts.count / pageSize),
       currentPage: parseInt(page),
     });
   } catch (error) {

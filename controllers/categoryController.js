@@ -1,17 +1,36 @@
 const db = require("../models");
 
 exports.getAllCategories = async (req, res) => {
+  const {
+    page = 1,
+    pageSize = 10,
+    sortBy = 'createdAt',
+    order = 'DESC',
+  } = req.query;
+
   try {
-    const categories = await db.Category.findAll(
+    const offset = (page - 1) * pageSize;
+    const where = {};
+    const orderBy = [[sortBy, order.toUpperCase()]];
+
+    const categories = await db.Category.findAndCountAll(
       {
+        limit: parseInt(pageSize),
+        offset: parseInt(offset),
         attributes: {
           include: [
             [db.Sequelize.literal(`(SELECT COUNT(*) FROM "PostCategories" WHERE "PostCategories"."categoryId" = "Category"."id")`), 'postCount'],
           ]
         },
+        order: orderBy,
+        distinct: true
       }
     );
-    res.status(200).json(categories);
+    res.status(200).json({
+      categories: categories.rows,
+      totalCategories: categories.count,
+      totalPages: Math.ceil(categories.count / pageSize),
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Failed to retrieve categories" });
