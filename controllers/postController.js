@@ -98,31 +98,43 @@ exports.getPostComments = async (req, res) => {
     const whereCondition = { postId };
     const post = await db.Post.findByPk(postId);
 
-    if (authToken) { 
+    // Determine visibility of comments based on user role
+    if (authToken) {
       try {
         req.user = jwt.verify(authToken.split(' ')[1], process.env.JWT_SECRET);
         if (req.user.role !== "admin" && req.user.id !== post.userId) {
           whereCondition.status = "active";
         }
-      }
-      catch {
+      } catch {
         whereCondition.status = "active";
       }
     } else {
       whereCondition.status = "active";
     }
 
+    // Fetch all comments for the post
     const comments = await db.Comment.findAll({
       where: whereCondition,
       include: ["likes", "user"],
     });
 
-    res.status(200).json(comments);
+    // Filter out replies to inactive comments
+    const activeCommentIds = comments
+      .filter(comment => comment.status === 'active')
+      .map(comment => comment.id);
+
+    const filteredComments = comments.filter(comment => {
+      // Keep top-level comments or replies where the parent comment is active
+      return !comment.replyId || activeCommentIds.includes(comment.replyId);
+    });
+
+    res.status(200).json(filteredComments);
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Failed to retrieve comments" });
   }
 };
+
 exports.createComment = async (req, res) => {
   try {
     const { content } = req.body;
