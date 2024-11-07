@@ -90,6 +90,7 @@ exports.getCategoryPosts = async (req, res) => {
     });
 
     res.status(200).json({
+      title: category.title,
       posts: posts.rows,
       totalPosts: posts.count,
       totalPages: Math.ceil(posts.count / pageSize),
