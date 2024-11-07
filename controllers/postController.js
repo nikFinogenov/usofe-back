@@ -58,11 +58,6 @@ exports.getPost = async (req, res) => {
       include: [
         "categories",
         "user",
-        {
-          model: db.Comment,
-          as: "comments",
-          include: ["likes", "user"] // Получаем лайки, связанные с комментариями
-        },
         "likes"
       ],
     });
@@ -119,7 +114,7 @@ exports.getPostComments = async (req, res) => {
 
     const comments = await db.Comment.findAll({
       where: whereCondition,
-      include: ["user"],
+      include: ["likes", "user"],
     });
 
     res.status(200).json(comments);
