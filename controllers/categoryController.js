@@ -60,40 +60,61 @@ exports.getCategoryPosts = async (req, res) => {
   try {
     const offset = (page - 1) * pageSize;
 
-    const category = await db.Category.findByPk(req.params.category_id);
-    if (!category) return res.status(404).json({ error: "Category not found" });
-
-    const posts = await db.Post.findAndCountAll({
-      where: {
-        status,
-      },
-      limit: parseInt(pageSize),
-      offset: parseInt(offset),
+    const category = await db.Category.findByPk(req.params.category_id,  {
       include: [
         {
-          model: db.Category,
-          as: "categories",
-          where: { id: category.id },
-          through: { attributes: [] },
-        },
-        "user"
-      ],
-      attributes: {
-        include: [
-          [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Comments" WHERE "Comments"."postId" = "Post"."id")`), 'commentCount'],
-          [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'like')`), 'likeCount'],
-          [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'dislike')`), 'dislikeCount']
-        ]
-      },
-      order: [[sortBy, order.toUpperCase()]],
-      distinct: true
+          model: db.Post, 
+          as:'posts',
+          through:{ attributes: []},
+          include: [
+            {
+              model: db.User,
+              as:'user',
+              attributes: ['id', 'fullName', 'login']
+            },
+            {
+              model: db.Category,
+              as:'categories',
+              attributes: ['id', 'title'],
+              through: { attributes: [] }
+            }
+          ]
+        }
+      ]
     });
+    if (!category) return res.status(404).json({ error: "Category not found" });
 
+    // const posts = await db.Post.findAndCountAll({
+    //   where: {
+    //     status,
+    //   },
+    //   limit: parseInt(pageSize),
+    //   offset: parseInt(offset),
+    //   include: [
+    //     {
+    //       model: db.Category,
+    //       as: 'categories',
+    //       where: { id: category.id },
+    //       through: { attributes: [] },
+    //     }
+    //     "user"
+    //   ],
+    //   attributes: {
+    //     include: [
+    //       [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Comments" WHERE "Comments"."postId" = "Post"."id")`), 'commentCount'],
+    //       [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'like')`), 'likeCount'],
+    //       [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'dislike')`), 'dislikeCount']
+    //     ]
+    //   },
+    //   order: [[sortBy, order.toUpperCase()]],
+    //   distinct: true
+    // });
+    console.log(category.posts)
     res.status(200).json({
       title: category.title,
-      posts: posts.rows,
-      totalPosts: posts.count,
-      totalPages: Math.ceil(posts.count / pageSize),
+      posts: category.posts,
+      totalPosts: category.posts.length,
+      totalPages: Math.ceil(category.posts.length / pageSize),
       currentPage: parseInt(page),
     });
   } catch (error) {
