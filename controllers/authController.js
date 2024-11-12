@@ -12,7 +12,7 @@ function funrandomPic() {
         'uploads/avatars/face_2.png',
         'uploads/avatars/face_3.png',
     ];
-    
+
     const rarePictures = [
         'uploads/avatars/face_4.png',
         'uploads/avatars/face_5.png',
@@ -112,6 +112,30 @@ exports.logout = (req, res) => {
     res.status(200).json({ message: 'Logout successful' });
 };
 
+
+exports.me = async (req, res) => {
+    try {
+        const { token } = req.body;
+
+        // Verify the token
+        const decoded = jwt.verify(token, JWT_SECRET);
+
+        // Find the user by the ID from the decoded token
+        const user = await db.User.findByPk(decoded.id, {
+            attributes: ['id', 'login', 'fullName', 'profilePicture', 'email', 'role', 'rating', 'emailConfirmed']
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Send user details back in response
+        res.status(200).json({ user });
+    } catch (error) {
+        res.status(500).json({ error: 'Could not retrieve user information' });
+    }
+};
+
 exports.requestPasswordReset = async (req, res) => {
     try {
         const { email } = req.body;
@@ -145,7 +169,7 @@ exports.confirmPasswordReset = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
-        if(user.confirmationToken === confirmToken) {
+        if (user.confirmationToken === confirmToken) {
             user.confirmationToken = null;
             user.password = newPassword;
             await user.save();
@@ -172,7 +196,7 @@ exports.confirmEmail = async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        if(user.confirmationToken === confirmToken) {
+        if (user.confirmationToken === confirmToken) {
             user.emailConfirmed = true;
             user.confirmationToken = null;
             await user.save();
