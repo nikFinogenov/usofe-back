@@ -69,13 +69,12 @@ exports.getCategoryPosts = async (req, res) => {
 
     const category = await db.Category.findByPk(req.params.category_id, {
       where,
-      limit: parseInt(pageSize),
-      offset: parseInt(offset),
       include: [
         {
           model: db.Post,
           as: 'posts',
           through: { attributes: [] },
+          order: orderBy,
           include: [
             {
               model: db.User,
@@ -88,8 +87,7 @@ exports.getCategoryPosts = async (req, res) => {
               attributes: ['id', 'title'],
               through: { attributes: [] }
             }
-          ]
-          ,
+          ],
           attributes: {
             include: [
               [db.Sequelize.literal(`
@@ -111,15 +109,17 @@ exports.getCategoryPosts = async (req, res) => {
           },
         }
       ],
-      order: orderBy,
-      distinct: true
     });
+    // console.log(category.posts.length);
+    const count = category.posts.length;
+    category.posts = category.posts.slice((parseInt(page) - 1) * pageSize, parseInt(page) * pageSize)
     if (!category) return res.status(404).json({ error: "Category not found" });
+    // console.log(category);
     res.status(200).json({
       title: category.title,
       posts: category.posts,
-      totalPosts: category.posts.length,
-      totalPages: Math.ceil(category.posts.length / pageSize),
+      totalPosts: count,
+      totalPages: Math.ceil(count / pageSize),
       currentPage: parseInt(page),
     });
   } catch (error) {
