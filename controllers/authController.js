@@ -8,23 +8,25 @@ const TOKEN_EXPIRATION = process.env.TOKEN_EXPIRATION || '1h';
 const FRONTEND_URL = process.env.HOST && process.env.PORT ? `${process.env.HOST}:${process.env.PORT}` : 'http://localhost:3306'
 function funrandomPic() {
     const commonPictures = [
-        'uploads/avatars/face_1.png',
-        'uploads/avatars/face_2.png',
-        'uploads/avatars/face_3.png',
+        'avatars/face_1.png',
+        'avatars/face_2.png',
+        'avatars/face_3.png',
     ];
 
     const rarePictures = [
-        'uploads/avatars/face_4.png',
-        'uploads/avatars/face_5.png',
+        'avatars/face_4.png',
+        'avatars/face_5.png',
     ];
 
     const randomNumber = Math.floor(Math.random() * 100);
+    let finalPic = `${FRONTEND_URL}/`
 
     if (randomNumber < 5) {
-        return rarePictures[Math.floor(Math.random() * rarePictures.length)];
+        finalPic = finalPic + rarePictures[Math.floor(Math.random() * rarePictures.length)];
     } else {
-        return commonPictures[Math.floor(Math.random() * commonPictures.length)];
+        finalPic = finalPic + commonPictures[Math.floor(Math.random() * commonPictures.length)];
     }
+    return finalPic;
 }
 
 exports.register = async (req, res) => {
@@ -61,6 +63,7 @@ exports.register = async (req, res) => {
     }
 };
 
+
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -73,9 +76,9 @@ exports.login = async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        if (!user.emailConfirmed) {
-            return res.status(403).json({ error: 'Please confirm your email before logging in' });
-        }
+        // if (!user.emailConfirmed) {
+        //     return res.status(403).json({ error: 'Please confirm your email before logging in' });
+        // }
 
         const validPassword = user.checkPassword(password);
         if (!validPassword) {
@@ -111,8 +114,6 @@ exports.login = async (req, res) => {
 exports.logout = (req, res) => {
     res.status(200).json({ message: 'Logout successful' });
 };
-
-
 exports.me = async (req, res) => {
     try {
         const { token } = req.body;
@@ -187,7 +188,6 @@ exports.confirmPasswordReset = async (req, res) => {
 exports.confirmEmail = async (req, res) => {
     try {
         const { token } = req.params;
-
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         const user = await db.User.findOne({ where: { email: decoded.email } });
@@ -196,7 +196,7 @@ exports.confirmEmail = async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        if (user.confirmationToken === confirmToken) {
+        if (user.confirmationToken === token) {
             user.emailConfirmed = true;
             user.confirmationToken = null;
             await user.save();
