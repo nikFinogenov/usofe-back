@@ -47,6 +47,10 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "assets", "index.html"));
 });
+
+app.use(express.static(path.join(__dirname, 'uploads')));
+app.use(express.static(path.join(__dirname, 'assets')));
+
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerDocument));
 
 app.listen(PORT, () => {

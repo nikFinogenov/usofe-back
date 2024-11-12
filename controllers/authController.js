@@ -63,10 +63,10 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
     try {
-        const { login, email, password } = req.body;
+        const { email, password } = req.body;
 
         const user = await db.User.findOne({
-            where: { [Op.or]: [{ login }, { email }] },
+            where: { email },
         });
 
         if (!user) {
@@ -85,8 +85,24 @@ exports.login = async (req, res) => {
         const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
             expiresIn: TOKEN_EXPIRATION,
         });
+        const userData = {
+            id: user.id,
+            login: user.login,
+            fullName: user.fullName,
+            profilePicture: user.profilePicture,
+            email: user.email,
+            role: user.role,
+            rating: user.rating,
+            emailConfirmed: user.emailConfirmed
+        };
 
-        res.status(200).json({ message: 'Login successful', token });
+        res.status(200).json({
+            message: 'Login successful',
+            token,
+            user: userData
+        });
+
+        // res.status(200).json({ message: 'Login successful', token });
     } catch (error) {
         res.status(500).json({ error: 'Login failed' });
     }
