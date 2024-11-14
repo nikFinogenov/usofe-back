@@ -10,5 +10,6 @@ router.post('/', isAuthenticated, isAdmin, userController.createUser);
 router.patch('/avatar', isAuthenticated, upload.single('avatar'), userController.uploadAvatar);
 router.patch('/:user_id', isAuthenticated, userController.updateUser);
 router.delete('/:user_id', isAuthenticated, userController.deleteUser);
+router.get('/:user_id/posts', userController.getUserPosts);
 
 module.exports = router;

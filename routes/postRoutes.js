@@ -4,8 +4,8 @@ const { isAuthenticated } = require('../middlewares/authMiddleware');
 const router = express.Router();
 
 router.get('/', postController.getAllPosts);
-router.get('/:post_id', postController.getPost);
 router.get('/random', postController.getRandomPost);
+router.get('/:post_id', postController.getPost);
 router.get('/:post_id/comments', postController.getPostComments);
 router.post('/:post_id/comments', isAuthenticated, postController.createComment);
 router.get('/:post_id/categories', postController.getAllCategories);

@@ -87,17 +87,22 @@ exports.getPost = async (req, res) => {
 
 exports.getRandomPost = async (req, res) => {
   try {
-    const count = await db.Post.count();
+    const count = await db.Post.count({ where: { status: 'active' } });
 
-    const randomIndex = Math.floor(Math.random() * count);
-
-    const randomPost = await db.Post.findOne({ offset: randomIndex });
-
-    if (!randomPost) {
-      return res.status(404).json({ message: "No post found" });
+    if (count === 0) {
+      return res.status(404).json({ message: "No active posts available" });
     }
 
-    res.status(200).json(randomPost);
+    let randomPost;
+    while (!randomPost) {
+      const randomIndex = Math.floor(Math.random() * count);
+      randomPost = await db.Post.findOne({
+        where: { status: 'active' },
+        offset: randomIndex,
+      });
+    }
+
+    res.status(200).json({ id: randomPost.id });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
