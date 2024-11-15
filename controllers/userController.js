@@ -160,6 +160,50 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
+exports.deleteUserPosts = async (req, res) => {
+  try {
+    const { user_id } = req.params;
+
+    const user = await db.User.findByPk(user_id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userPosts = await db.Post.findAll({ where: { userId: user_id } });
+
+    // Delete each post individually to trigger cascading deletes on comments
+    for (const post of userPosts) {
+      await post.destroy(); 
+    }
+    res.status(200).json({ message: 'All posts deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete posts' });
+  }
+};
+
+// Deletes all comments by a user
+exports.deleteUserComments = async (req, res) => {
+  try {
+    const { user_id } = req.params;
+
+    const user = await db.User.findByPk(user_id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // await db.Comment.destroy({ where: { userId: user_id } });
+    const userComments = await db.Comment.findAll({ where: { userId: user_id } });
+
+    // Delete each post individually to trigger cascading deletes on comments
+    for (const comment of userComments) {
+      await comment.destroy(); 
+    }
+    res.status(200).json({ message: 'All comments deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete comments' });
+  }
+};
+
 exports.getUserPosts = async (req, res) => {
   const {
     page = 1,
