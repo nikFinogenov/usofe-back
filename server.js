@@ -34,9 +34,9 @@ initializeSequelize()
 app.use("/admin", adminRouter);
 
 app.use(cors({
-  origin: FRONT_URL
+  origin: FRONT_URL, credentials: true
 }));
-
+// app.use(cors({ origin: process.env.FRONT_URL, credentials: true }));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/favourites", require("./routes/favouriteRoutes"));
 app.use("/api/posts", require("./routes/postRoutes"));
