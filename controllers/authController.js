@@ -5,7 +5,8 @@ const { sendConfirmationEmail, sendResetEmail } = require('../services/emailServ
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const TOKEN_EXPIRATION = process.env.TOKEN_EXPIRATION || '1h';
-const FRONTEND_URL = process.env.HOST && process.env.PORT ? `${process.env.HOST}:${process.env.PORT}` : 'http://localhost:3306'
+const FRONTEND_URL = 'http://localhost:3000'
+const BACKEND_URL = 'http://localhost:3306'
 function funrandomPic() {
     const commonPictures = [
         'avatars/face_1.png',
@@ -19,7 +20,7 @@ function funrandomPic() {
     ];
 
     const randomNumber = Math.floor(Math.random() * 100);
-    let finalPic = `${FRONTEND_URL}/`
+    let finalPic = `${BACKEND_URL}/`
 
     if (randomNumber < 5) {
         finalPic = finalPic + rarePictures[Math.floor(Math.random() * rarePictures.length)];
@@ -53,7 +54,7 @@ exports.register = async (req, res) => {
         newUser.confirmationToken = confirmationToken;
         await newUser.save();
 
-        const confirmationLink = `${FRONTEND_URL}/api/auth/confirm/${confirmationToken}`;
+        const confirmationLink = `${FRONTEND_URL}/confirm-email/${confirmationToken}`;
         await sendConfirmationEmail(newUser.email, confirmationLink);
 
         res.status(201).json({ message: 'User registered successfully, please confirm your email.' });
@@ -143,14 +144,14 @@ exports.requestPasswordReset = async (req, res) => {
 
         const user = await db.User.findOne({ where: { email } });
         if (!user) {
-            return res.status(404).json({ error: 'User with this email does not exist' });
+            return res.status(404).json({ error: 'Email is not registered' });
         }
 
         const resetToken = jwt.sign({ email: user.email }, JWT_SECRET, { expiresIn: TOKEN_EXPIRATION });
         user.confirmationToken = resetToken;
         await user.save();
 
-        const resetLink = `${FRONTEND_URL}/api/auth/password-reset/${resetToken}`;
+        const resetLink = `${FRONTEND_URL}/confirm-reset/${resetToken}`;
         await sendResetEmail(user.email, resetLink);
 
         res.status(200).json({ message: 'Password reset link sent to email' });
