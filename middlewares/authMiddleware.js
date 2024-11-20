@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const db = require('../models');
 
 exports.isAuthenticated = (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
@@ -9,6 +10,9 @@ exports.isAuthenticated = (req, res, next) => {
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decoded;
+        // const user = await db.User.findByPk(decoded.id);
+        // // console.log(decoded);
+        // if(user.emailConfirmed) 
         next();
     } catch (error) {
         res.status(401).json({ error: 'Invalid token' });

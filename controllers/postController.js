@@ -160,9 +160,13 @@ exports.createComment = async (req, res) => {
       userId: req.user.id,
       postId: req.params.post_id,
     });
+    const commentWithDetails = await db.Comment.findByPk(newComment.id, {
+      include: ["likes", "user"], // Включаем ассоциации
+    });
 
-    res.status(201).json(newComment);
+    res.status(201).json(commentWithDetails);
   } catch (error) {
+    console.log(error);
     res.status(400).json({ error: "Failed to create comment" });
   }
 };
