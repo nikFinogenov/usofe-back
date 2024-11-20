@@ -43,7 +43,7 @@ exports.getAllPosts = async (req, res) => {
                  AND parent."status" = 'active'
              ))
             )
-        `), 'commentCount'],             
+        `), 'commentCount'],
           [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'like')`), 'likeCount'],
           [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'dislike')`), 'dislikeCount']
         ]
@@ -51,7 +51,7 @@ exports.getAllPosts = async (req, res) => {
       order: orderBy,
       distinct: true
     });
-    
+
 
     res.status(200).json({
       posts: posts.rows,
@@ -262,7 +262,7 @@ exports.updatePost = async (req, res) => {
     const post = await db.Post.findByPk(req.params.post_id);
 
     if (!post) return res.status(404).json({ error: "Post not found" });
-    if(req.user.role !== "admin") {
+    if (req.user.role !== "admin") {
       if (post.userId !== req.user.id) {
         return res
           .status(403)
@@ -318,11 +318,11 @@ exports.deleteLike = async (req, res) => {
     });
 
     if (!like) return res.status(404).json({ error: "Like not found" });
-
+    const type = like.type;
     await like.destroy();
     const post = await db.Post.findByPk(req.params.post_id);
     await db.User.increment("rating", {
-      by: -1,
+      by: type === 'dislike' ? 1 : -1,
       where: { id: post.userId },
     });
 
