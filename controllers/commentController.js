@@ -41,7 +41,7 @@ exports.createCommentLike = async (req, res) => {
         await existingLike.save();
         await db.User.increment("rating", {
           by: existingLike.type == "dislike" ? -2 : 2,
-          where: { id: com.userId },
+          where: { id: comment.userId },
         });
         return res.status(200).json({ message: 'Like type updated successfully', like: existingLike });
       } else {
@@ -60,6 +60,7 @@ exports.createCommentLike = async (req, res) => {
 
     res.status(201).json(newLike);
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: 'Failed to create like for comment' });
   }
 };
@@ -104,12 +105,12 @@ exports.deleteCommentLike = async (req, res) => {
     });
 
     if (!like) return res.status(404).json({ error: 'Like not found' });
-
+    const type = like.type;
     await like.destroy();
 
     const comment = await db.Comment.findByPk(req.params.comment_id);
     await db.User.increment("rating", {
-      by: -1,
+      by: type === 'dislike' ? 1 : -1,
       where: { id: comment.userId },
     });
     res.status(200).json({ message: 'Like deleted successfully' });
