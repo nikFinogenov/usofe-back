@@ -154,9 +154,10 @@ exports.getPostComments = async (req, res) => {
 
 exports.createComment = async (req, res) => {
   try {
-    const { content } = req.body;
+    const { content, replyId } = req.body;
     const newComment = await db.Comment.create({
       content,
+      replyId,
       userId: req.user.id,
       postId: req.params.post_id,
     });

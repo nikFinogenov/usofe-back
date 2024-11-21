@@ -109,7 +109,7 @@ async function seedDatabase() {
       for (let i = 0; i < postsToCreate; i++) {
         const post = await db.Post.create({
           title: faker.lorem.sentence(),
-          content: `<p>${faker.lorem.paragraph()}</p>`,
+          content: faker.lorem.paragraph(),
           userId: Math.floor(Math.random() * USER_AMOUNT) + 1,
         });
         const randomCategories = faker.helpers.arrayElements(categories, Math.floor(Math.random() * CATEGORY_AMOUNT) + 1);
@@ -135,7 +135,7 @@ async function seedDatabase() {
       const commentsToCreate = COMMENT_AMOUNT - commentCount;
       for (let i = 0; i < commentsToCreate; i++) {
         await db.Comment.create({
-          content: `<p>${faker.lorem.sentence()}</p>`,
+          content: faker.lorem.sentence(),
           userId: Math.floor(Math.random() * USER_AMOUNT) + 1,
           postId: Math.floor(Math.random() * POST_AMOUNT) + 1,
         });
