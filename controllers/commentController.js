@@ -68,7 +68,6 @@ exports.createCommentLike = async (req, res) => {
 exports.updateComment = async (req, res) => {
   try {
     const { content, status } = req.body;
-    console.log(content, status);
     const comment = await db.Comment.findByPk(req.params.comment_id);
 
     if (!comment) return res.status(404).json({ error: 'Comment not found' });

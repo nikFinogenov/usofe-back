@@ -37,6 +37,18 @@ exports.getAllCategories = async (req, res) => {
   }
 };
 
+exports.getAllCategoriesTags = async(req, res) => {
+  try {
+    const categories = await db.Category.findAll({
+      attributes: { exclude: ['description', 'createdAt', 'updatedAt'] },
+    });
+    res.status(200).json({categories});
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Failed to retrieve categories" });
+  }
+};
+
 exports.getCategory = async (req, res) => {
   try {
     const category = await db.Category.findByPk(req.params.category_id);
@@ -127,8 +139,6 @@ exports.getCategoryPosts = async (req, res) => {
     res.status(500).json({ error: "Failed to retrieve posts for category" });
   }
 };
-
-
 exports.createCategory = async (req, res) => {
   try {
     const { title, description } = req.body;
@@ -150,7 +160,6 @@ exports.createCategory = async (req, res) => {
     res.status(500).json({ error: "Failed to create category" });
   }
 };
-
 exports.updateCategory = async (req, res) => {
   try {
     const { title, description } = req.body;
@@ -167,7 +176,6 @@ exports.updateCategory = async (req, res) => {
     res.status(500).json({ error: "Failed to update category" });
   }
 };
-
 exports.deleteCategory = async (req, res) => {
   try {
     const category = await db.Category.findByPk(req.params.category_id);

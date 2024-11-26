@@ -4,6 +4,7 @@ const { isAuthenticated, isAdmin } = require('../middlewares/authMiddleware');
 const router = express.Router();
 
 router.get('/', categoryController.getAllCategories);
+router.get('/tags', categoryController.getAllCategoriesTags);
 router.get('/:category_id', categoryController.getCategory);
 router.get('/:category_id/posts', categoryController.getCategoryPosts);
 router.post('/', isAuthenticated, categoryController.createCategory);
