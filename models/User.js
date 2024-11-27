@@ -7,6 +7,7 @@ module.exports = (sequelize) => {
       User.hasMany(models.Post, { foreignKey: 'userId', onDelete: 'CASCADE'});
       User.hasMany(models.Comment, { foreignKey: 'userId', onDelete: 'CASCADE' });
       User.hasMany(models.Like, { foreignKey: 'userId', onDelete: 'CASCADE' });
+      User.hasMany(models.Favourite, { foreignKey: 'userId', onDelete: 'CASCADE', hooks:true });
     }
 
     checkPassword(loginPassword) {

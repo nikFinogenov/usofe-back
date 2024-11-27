@@ -156,6 +156,7 @@ exports.deleteUser = async (req, res) => {
     await user.destroy();
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: 'Failed to delete user' });
   }
 };
@@ -265,5 +266,43 @@ exports.getUserPosts = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Failed to retrieve posts" });
+  }
+};
+
+exports.getUserStats = async (req, res) => {
+  try {
+    const user = await db.User.findByPk(req.params.user_id, {
+      attributes: ['id', 'fullName', 'login', 'email', 'profilePicture', 'role', 'rating', 'createdAt'],
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Получение количества постов
+    const totalPosts = await db.Post.count({
+      where: { userId: user.id, status: 'active' },
+    });
+
+    // Получение последнего комментария
+    const lastComment = await db.Comment.findOne({
+      where: { userId: user.id },
+      order: [['createdAt', 'DESC']],
+      attributes: ['content', 'createdAt'],
+    });
+
+    const accountAge = Math.ceil((new Date() - new Date(user.createdAt)) / (1000 * 60 * 60 * 24)); // Возраст аккаунта в днях
+
+    res.status(200).json({
+      user,
+      stats: {
+        totalPosts,
+        lastComment: lastComment || null,
+        accountAge,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to retrieve user stats' });
   }
 };

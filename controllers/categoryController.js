@@ -78,6 +78,7 @@ exports.getCategoryPosts = async (req, res) => {
     }
 
     const orderBy = [[sortBy, order.toUpperCase()]];
+    // console.log(req.params.category_id);
 
     const category = await db.Category.findByPk(req.params.category_id, {
       where,

@@ -66,24 +66,39 @@ exports.getAllPosts = async (req, res) => {
 };
 exports.getPost = async (req, res) => {
   try {
+    const authToken = req.headers.authorization;
+    // console.log(authToken);
+    if(authToken) req.user = jwt.verify(authToken.split(' ')[1], process.env.JWT_SECRET); 
+    const userId = req.user ? req.user.id : null; // Проверяем, есть ли авторизация
     const post = await db.Post.findByPk(req.params.post_id, {
       include: [
         "categories",
         "user",
-        "likes"
+        "likes",
       ],
     });
-    await post.increment("views", {
-      by: 1
-    });
 
-    if (!post) return res.status(404).json({ error: "Post not found" });
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    // Увеличиваем просмотры
+    await post.increment("views", { by: 1 });
+
+    // Добавляем информацию о фаворите, если пользователь авторизован
+    if (userId) {
+      const favourite = await db.Favourite.findOne({
+        where: { userId, postId: post.id },
+      });
+      if(favourite) post.setDataValue('isFavourited', true);
+    }
 
     res.status(200).json(post);
   } catch (error) {
     res.status(500).json({ error: "Failed to retrieve post" });
   }
 };
+
 
 exports.getRandomPost = async (req, res) => {
   try {
@@ -109,11 +124,17 @@ exports.getRandomPost = async (req, res) => {
 };
 
 exports.getPostComments = async (req, res) => {
+  const { page = 1, pageSize = 10 } = req.query;  // Получаем параметры пагинации
+
   try {
     const postId = req.params.post_id;
     const authToken = req.headers.authorization;
     const whereCondition = { postId };
+
     const post = await db.Post.findByPk(postId);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
 
     // Determine visibility of comments based on user role
     if (authToken) {
@@ -129,10 +150,15 @@ exports.getPostComments = async (req, res) => {
       whereCondition.status = "active";
     }
 
-    // Fetch all comments for the post
-    const comments = await db.Comment.findAll({
+    // Calculate offset for pagination
+    const offset = (page - 1) * pageSize;
+
+    // Fetch comments with pagination
+    const { rows: comments, count: totalComments } = await db.Comment.findAndCountAll({
       where: whereCondition,
       include: ["likes", "user"],
+      limit: parseInt(pageSize),
+      offset: offset,
     });
 
     // Filter out replies to inactive comments
@@ -145,12 +171,19 @@ exports.getPostComments = async (req, res) => {
       return !comment.replyId || activeCommentIds.includes(comment.replyId);
     });
 
-    res.status(200).json(filteredComments);
+    // Return paginated comments with total count and total pages
+    res.status(200).json({
+      comments: filteredComments,
+      totalComments: totalComments,
+      totalPages: Math.ceil(totalComments / pageSize),
+      currentPage: parseInt(page),
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Failed to retrieve comments" });
   }
 };
+
 
 exports.createComment = async (req, res) => {
   try {
@@ -278,11 +311,13 @@ exports.updatePost = async (req, res) => {
       post.content = content || post.content;
     }
     else {
+      post.title = title || post.title;
+      post.content = content || post.content;
       post.status = status || post.status;
     }
 
     await post.save();
-
+    // console.log(post);
     if (categories) {
       const updatedCategories = await db.Category.findAll({
         where: { id: categories },

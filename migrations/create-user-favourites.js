@@ -1,6 +1,6 @@
 module.exports = {
     up: async (queryInterface, Sequelize) => {
-        await queryInterface.createTable('Favorites', {
+        await queryInterface.createTable('Favourites', {
             id: {
                 allowNull: false,
                 autoIncrement: true,
@@ -27,6 +27,6 @@ module.exports = {
     },
 
     down: async (queryInterface, Sequelize) => {
-        await queryInterface.dropTable('Favorites');
+        await queryInterface.dropTable('Favourites');
     },
 };
