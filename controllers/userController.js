@@ -221,6 +221,8 @@ exports.getUserPosts = async (req, res) => {
 
     const where = {};
     where.userId = user_id;
+    // if(!user_id) res.status(401).json({ error: 'Invalid token' });
+    // console.log(user_id);
 
     if (status) {
       where.status = status;

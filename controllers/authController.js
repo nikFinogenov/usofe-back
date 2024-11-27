@@ -121,6 +121,7 @@ exports.me = async (req, res) => {
 
         // Verify the token
         const decoded = jwt.verify(token, JWT_SECRET);
+        // console.log("YA TUTA");
 
         // Find the user by the ID from the decoded token
         const user = await db.User.findByPk(decoded.id, {
@@ -134,6 +135,13 @@ exports.me = async (req, res) => {
         // Send user details back in response
         res.status(200).json({ user });
     } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ error: 'Token has expired' });
+        } else if (error.name === 'JsonWebTokenError') {
+            return res.status(401).json({ error: 'Invalid token' });
+        }
+
+        // Handle other errors
         res.status(500).json({ error: 'Could not retrieve user information' });
     }
 };
