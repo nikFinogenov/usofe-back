@@ -13,27 +13,27 @@ exports.search = async (req, res) => {
         // User search by tag (@)
         if (q.startsWith('@')) {
             results.users = await db.User.findAll({
-                where: { tag: q.slice(1) },
-                attributes: { exclude: ['password'] }  // Exclude sensitive data like password
+                where: { login: { [db.Sequelize.Op.iLike]: q.slice(1) } },  // Use iLike for case-insensitive search
+                attributes: { exclude: ['password'] }
             });
         }
         // User search by name (u:)
         else if (q.startsWith('u:')) {
             results.users = await db.User.findAll({
-                where: { name: { [db.Sequelize.Op.like]: `%${q.slice(2)}%` } },
+                where: { name: { [db.Sequelize.Op.iLike]: `%${q.slice(2)}%` } },  // Use iLike for case-insensitive search
                 attributes: { exclude: ['password'] }
             });
         }
         // Category search (c:)
         else if (q.startsWith('c:')) {
             results.categories = await db.Category.findAll({
-                where: { name: { [db.Sequelize.Op.like]: `%${q.slice(2)}%` } }
+                where: { name: { [db.Sequelize.Op.iLike]: `%${q.slice(2)}%` } }  // Use iLike for case-insensitive search
             });
         }
         // Post search (p:)
         else if (q.startsWith('p:')) {
             results.posts = await db.Post.findAll({
-                where: { title: { [db.Sequelize.Op.like]: `%${q.slice(2)}%` } }
+                where: { title: { [db.Sequelize.Op.iLike]: `%${q.slice(2)}%` } }  // Use iLike for case-insensitive search
             });
         }
         // General content search (no prefix)
@@ -41,12 +41,13 @@ exports.search = async (req, res) => {
             results.general = await db.Post.findAll({
                 where: {
                     [db.Sequelize.Op.or]: [
-                        { title: { [db.Sequelize.Op.like]: `%${q}%` } },
-                        { content: { [db.Sequelize.Op.like]: `%${q}%` } }
+                        { title: { [db.Sequelize.Op.iLike]: `%${q}%` } },  // Use iLike for case-insensitive search
+                        { content: { [db.Sequelize.Op.iLike]: `%${q}%` } }  // Use iLike for case-insensitive search
                     ]
                 }
             });
         }
+        // console.log(results);
 
         res.status(200).json(results);
     } catch (error) {
