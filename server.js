@@ -43,6 +43,7 @@ app.use("/api/posts", require("./routes/postRoutes"));
 app.use("/api/comments", require("./routes/commentRoutes"));
 app.use("/api/categories", require("./routes/categoryRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/search", require("./routes/searchRoutes"))
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "assets", "index.html"));
