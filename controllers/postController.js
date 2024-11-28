@@ -124,7 +124,7 @@ exports.getRandomPost = async (req, res) => {
 };
 
 exports.getPostComments = async (req, res) => {
-  const { page = 1, pageSize = 10 } = req.query;  // Получаем параметры пагинации
+  const { page = 1, pageSize = 10, sortBy = 'date', order = 'desc' } = req.query;  // Get pagination and sorting parameters
 
   try {
     const postId = req.params.post_id;
@@ -153,12 +153,25 @@ exports.getPostComments = async (req, res) => {
     // Calculate offset for pagination
     const offset = (page - 1) * pageSize;
 
-    // Fetch comments with pagination
+    // Set the sorting criteria based on query parameters
+    let orderCriteria = [];
+    if (sortBy === 'rating') {
+      // Calculate rating as the difference between likes and dislikes
+      orderCriteria = [
+        [db.sequelize.literal('(SELECT COUNT(*) FROM Likes WHERE Likes.commentId = Comment.id AND Likes.type = "like") - (SELECT COUNT(*) FROM Likes WHERE Likes.commentId = Comment.id AND Likes.type = "dislike")'), order]
+      ];
+    } else {
+      // Default to sorting by date (createdAt)
+      orderCriteria = [['createdAt', order]];
+    }
+
+    // Fetch comments with pagination and sorting
     const { rows: comments, count: totalComments } = await db.Comment.findAndCountAll({
       where: whereCondition,
       include: ["likes", "user"],
       limit: parseInt(pageSize),
       offset: offset,
+      order: orderCriteria,  // Apply the sorting criteria
     });
 
     // Filter out replies to inactive comments
@@ -183,6 +196,7 @@ exports.getPostComments = async (req, res) => {
     res.status(500).json({ error: "Failed to retrieve comments" });
   }
 };
+
 
 
 exports.createComment = async (req, res) => {
