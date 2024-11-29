@@ -153,25 +153,42 @@ exports.getPostComments = async (req, res) => {
     // Calculate offset for pagination
     const offset = (page - 1) * pageSize;
 
-    // Set the sorting criteria based on query parameters
-    let orderCriteria = [];
-    if (sortBy === 'rating') {
-      // Calculate rating as the difference between likes and dislikes
-      orderCriteria = [
-        [db.sequelize.literal('(SELECT COUNT(*) FROM Likes WHERE Likes.commentId = Comment.id AND Likes.type = "like") - (SELECT COUNT(*) FROM Likes WHERE Likes.commentId = Comment.id AND Likes.type = "dislike")'), order]
-      ];
-    } else {
-      // Default to sorting by date (createdAt)
-      orderCriteria = [['createdAt', order]];
-    }
-
-    // Fetch comments with pagination and sorting
+    // Fetch comments with pagination
     const { rows: comments, count: totalComments } = await db.Comment.findAndCountAll({
       where: whereCondition,
       include: ["likes", "user"],
       limit: parseInt(pageSize),
       offset: offset,
-      order: orderCriteria,  // Apply the sorting criteria
+      order: sortBy === 'rating' ? [] : [['createdAt', order]],  // Set order only if not sorting by rating
+    });
+
+    // Fetch likes and dislikes counts for each comment
+    const commentIds = comments.map(comment => comment.id);
+    const likesCounts = await db.Like.findAll({
+      where: {
+        commentId: commentIds,
+        type: 'like'
+      },
+      attributes: ['commentId', [db.sequelize.fn('COUNT', db.sequelize.col('id')), 'count']],
+      group: ['commentId']
+    });
+
+    const dislikesCounts = await db.Like.findAll({
+      where: {
+        commentId: commentIds,
+        type: 'dislike'
+      },
+      attributes: ['commentId', [db.sequelize.fn('COUNT', db.sequelize.col('id')), 'count']],
+      group: ['commentId']
+    });
+
+    // Map counts to a rating for each comment
+    const ratings = {};
+    likesCounts.forEach(like => {
+      ratings[like.commentId] = (ratings[like.commentId] || 0) + like.get('count');
+    });
+    dislikesCounts.forEach(dislike => {
+      ratings[dislike.commentId] = (ratings[dislike.commentId] || 0) - dislike.get('count');
     });
 
     // Filter out replies to inactive comments
@@ -183,6 +200,14 @@ exports.getPostComments = async (req, res) => {
       // Keep top-level comments or replies where the parent comment is active
       return !comment.replyId || activeCommentIds.includes(comment.replyId);
     });
+
+    // If sorting by rating, sort the filtered comments based on the computed ratings
+    if (sortBy === 'rating') {
+      filteredComments.sort((a, b) => (ratings[b.id] || 0) - (ratings[a.id] || 0));
+      if (order === 'asc') {
+        filteredComments.reverse();
+      }
+    }
 
     // Return paginated comments with total count and total pages
     res.status(200).json({
@@ -196,8 +221,6 @@ exports.getPostComments = async (req, res) => {
     res.status(500).json({ error: "Failed to retrieve comments" });
   }
 };
-
-
 
 exports.createComment = async (req, res) => {
   try {
