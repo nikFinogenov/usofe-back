@@ -99,7 +99,6 @@ exports.getPost = async (req, res) => {
   }
 };
 
-
 exports.getRandomPost = async (req, res) => {
   try {
     const count = await db.Post.count({ where: { status: 'active' } });
@@ -124,7 +123,7 @@ exports.getRandomPost = async (req, res) => {
 };
 
 exports.getPostComments = async (req, res) => {
-  const { page = 1, pageSize = 10, sortBy = 'date', order = 'desc' } = req.query;  // Get pagination and sorting parameters
+  const { page = 1, pageSize = 10, sortBy = 'date', order = 'desc', filter = 'all' } = req.query;  // Get pagination, sorting, and filtering parameters
 
   try {
     const postId = req.params.post_id;
@@ -149,6 +148,14 @@ exports.getPostComments = async (req, res) => {
     } else {
       whereCondition.status = "active";
     }
+
+    // Adjust the where condition based on the filter
+    if (filter === 'active') {
+      whereCondition.status = 'active';
+    } else if (filter === 'inactive') {
+      whereCondition.status = 'inactive';
+    }
+    // If filter is 'all', we don't modify the whereCondition
 
     // Calculate offset for pagination
     const offset = (page - 1) * pageSize;
