@@ -4,27 +4,37 @@ const jwt = require('jsonwebtoken');
 const { tr } = require("@faker-js/faker");
 
 exports.getAllPosts = async (req, res) => {
-  const {
-    page = 1,
-    pageSize = 12,
-    sortBy = 'createdAt',
-    order = 'DESC',
-    status = 'active'
-  } = req.query;
+  const { page = 1, pageSize = 12, sortBy = 'date', order = 'desc', filter = 'all' } = req.query;
 
   try {
-    const offset = (page - 1) * pageSize;
-    let posts;
-
+    const authToken = req.headers.authorization;
     const where = {};
 
-    if (status) {
-      where.status = status;
+    // Проверка авторизации пользователя
+    if (authToken) {
+      try {
+        req.user = jwt.verify(authToken.split(' ')[1], process.env.JWT_SECRET);
+        if (req.user.role !== "admin") {
+          where.status = "active"; // Неадминистраторы могут видеть только активные посты
+        }
+      } catch {
+        where.status = "active"; // По умолчанию активные посты, если токен недействителен
+      }
+    } else {
+      where.status = "active"; // По умолчанию активные посты, если токен не предоставлен
     }
 
-    const orderBy = [[sortBy, order.toUpperCase()]];
+    // Настройка условия where в зависимости от фильтра
+    if (filter === 'active') {
+      where.status = 'active';
+    } else if (filter === 'inactive') {
+      where.status = 'inactive';
+    }
 
-    posts = await db.Post.findAndCountAll({
+    const offset = (page - 1) * pageSize;
+
+    // Получение постов с пагинацией и необходимыми ассоциациями
+    const { rows: postsData, count: totalPosts } = await db.Post.findAndCountAll({
       where,
       limit: parseInt(pageSize),
       offset: parseInt(offset),
@@ -43,32 +53,47 @@ exports.getAllPosts = async (req, res) => {
                  AND parent."status" = 'active'
              ))
             )
-        `), 'commentCount'],
+          `), 'commentCount'],
           [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'like')`), 'likeCount'],
-          [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'dislike')`), 'dislikeCount']
+          [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'dislike')`), 'dislikeCount'],
+          'views',
+          // Расчёт рейтинга для каждого поста
+          [db.Sequelize.literal(`
+            (SELECT COUNT(*) 
+             FROM "Likes" 
+             WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'like') 
+            - 
+            (SELECT COUNT(*) 
+             FROM "Likes" 
+             WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'dislike')
+          `), 'rating']
         ]
       },
-      order: orderBy,
+      // Убедитесь, что сортировка используется правильно: по рейтингу или по дате
+      order: sortBy === 'rating' ? [[db.Sequelize.literal('rating'), order.toUpperCase()]] : [['createdAt', order.toUpperCase()]],
       distinct: true
     });
 
-
+    // Возврат пагинированных постов с общим количеством и количеством страниц
     res.status(200).json({
-      posts: posts.rows,
-      totalPosts: posts.count,
-      totalPages: Math.ceil(posts.count / pageSize),
+      posts: postsData,
+      totalPosts,
+      totalPages: Math.ceil(totalPosts / pageSize),
       currentPage: parseInt(page),
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: "Failed to retrieve posts" });
+    res.status(500).json({ error: "Не удалось получить посты" });
   }
 };
+
+
+
 exports.getPost = async (req, res) => {
   try {
     const authToken = req.headers.authorization;
     // console.log(authToken);
-    if(authToken) req.user = jwt.verify(authToken.split(' ')[1], process.env.JWT_SECRET); 
+    if (authToken) req.user = jwt.verify(authToken.split(' ')[1], process.env.JWT_SECRET);
     const userId = req.user ? req.user.id : null; // Проверяем, есть ли авторизация
     const post = await db.Post.findByPk(req.params.post_id, {
       include: [
@@ -90,7 +115,7 @@ exports.getPost = async (req, res) => {
       const favourite = await db.Favourite.findOne({
         where: { userId, postId: post.id },
       });
-      if(favourite) post.setDataValue('isFavourited', true);
+      if (favourite) post.setDataValue('isFavourited', true);
     }
 
     res.status(200).json(post);
