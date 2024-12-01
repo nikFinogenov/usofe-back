@@ -23,6 +23,7 @@ exports.search = async (req, res) => {
         let userQueryByU = null;
         let categoryQueries = [];
         let postQuery = null;
+        let dateQuery = null;
 
         for (const query of queries) {
             if (query.startsWith('@')) {
@@ -33,6 +34,8 @@ exports.search = async (req, res) => {
                 categoryQueries.push(query.slice(2));
             } else if (query.startsWith('p:')) {
                 postQuery = query.slice(2);
+            } else if (query.startsWith('d:')) {
+                dateQuery = query.slice(2);
             } else {
                 postQuery = query;
             }
@@ -60,7 +63,7 @@ exports.search = async (req, res) => {
                 attributes: { exclude: ['password'] }
             });
             results.users = userResults;
-            userIds = userResults.map (user => user.id);
+            userIds = userResults.map(user => user.id);
         }
 
         let categoryIds = [];
@@ -97,6 +100,50 @@ exports.search = async (req, res) => {
         if (userIds.length > 0) {
             postConditions.push({ userId: { [db.Sequelize.Op.in]: userIds } });
         }
+        if (dateQuery) {
+        
+            // Поддержка различных разделителей
+            const dateParts = dateQuery.split(/\/|\./);  // Разделяет по слешу или точке
+        
+            let day, month, year;
+            
+            // Проверка, если введена дата в формате "день.месяц.год" или "день/месяц/год"
+            if (dateParts.length === 3) {
+                day = parseInt(dateParts[0]);
+                month = parseInt(dateParts[1]);
+                year = parseInt(dateParts[2]);
+            } 
+            // Если дата без года (например, "день/месяц")
+            else if (dateParts.length === 2) {
+                day = parseInt(dateParts[0]);
+                month = parseInt(dateParts[1]);
+                year = new Date().getFullYear();  // Используем текущий год
+            }
+            // Если дата только день/месяц (например, "день.месяц")
+            else if (dateParts.length === 1) {
+                day = parseInt(dateParts[0]);
+                month = new Date().getMonth() + 1;  // Месяц текущий
+                year = new Date().getFullYear();    // Текущий год
+            }
+            // console.log(dateParts);
+            // console.log(dateParts.length);
+        
+            // Форматирование даты в формате MM/DD/YYYY
+            const formattedDate = `${month < 10 ? '0' + month : month}/${day < 10 ? '0' + day : day}/${year}`;
+            // console.log(formattedDate);
+        
+            postConditions.push({
+                [db.Sequelize.Op.and]: [
+                    db.Sequelize.where(
+                        db.Sequelize.fn('DATE', db.Sequelize.col('Post.createdAt')),
+                        '=',
+                        formattedDate
+                    )
+                ]
+            });
+        }
+        
+
 
         const posts = await db.Post.findAll({
             where: postConditions.length > 0
