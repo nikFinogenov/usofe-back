@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const { tr } = require("@faker-js/faker");
 
 exports.getAllPosts = async (req, res) => {
-  const { page = 1, pageSize = 12, sortBy = 'date', order = 'desc', filter = 'all' } = req.query;
+  const { page = 1, pageSize = 12, sortBy = 'newest', order = 'desc', filter = 'all' } = req.query;
 
   try {
     const authToken = req.headers.authorization;
@@ -32,6 +32,33 @@ exports.getAllPosts = async (req, res) => {
     }
 
     const offset = (page - 1) * pageSize;
+
+    // Определение порядка сортировки
+    let orderCriteria = [];
+
+    switch (sortBy) {
+      case 'newest':
+        orderCriteria.push(['createdAt', 'DESC']);
+        break;
+      case 'oldest':
+        orderCriteria.push(['createdAt', 'ASC']);
+        break;
+      case 'most':
+        orderCriteria.push([db.Sequelize.literal('rating'), 'DESC']);
+        break;
+      case 'less':
+        orderCriteria.push([db.Sequelize.literal('rating'), 'ASC']);
+        break;
+      case 'popular':
+        orderCriteria.push(['views', 'DESC']);
+        break;
+      case 'unpopular':
+        orderCriteria.push(['views', 'ASC']);
+        break;
+      default:
+        orderCriteria.push(['createdAt', 'DESC']); // По умолчанию по новизне
+        break;
+    }
 
     // Получение постов с пагинацией и необходимыми ассоциациями
     const { rows: postsData, count: totalPosts } = await db.Post.findAndCountAll({
@@ -69,8 +96,7 @@ exports.getAllPosts = async (req, res) => {
           `), 'rating']
         ]
       },
-      // Убедитесь, что сортировка используется правильно: по рейтингу или по дате
-      order: sortBy === 'rating' ? [[db.Sequelize.literal('rating'), order.toUpperCase()]] : [['createdAt', order.toUpperCase()]],
+      order: orderCriteria,
       distinct: true
     });
 
@@ -86,8 +112,6 @@ exports.getAllPosts = async (req, res) => {
     res.status(500).json({ error: "Не удалось получить посты" });
   }
 };
-
-
 
 exports.getPost = async (req, res) => {
   try {
@@ -148,7 +172,7 @@ exports.getRandomPost = async (req, res) => {
 };
 
 exports.getPostComments = async (req, res) => {
-  const { page = 1, pageSize = 10, sortBy = 'date', order = 'desc', filter = 'all' } = req.query;  // Get pagination, sorting, and filtering parameters
+  const { page = 1, pageSize = 10, sortBy = 'most', order = 'desc', filter = 'all' } = req.query;  // Get pagination, sorting, and filtering parameters
 
   try {
     const postId = req.params.post_id;
@@ -191,7 +215,7 @@ exports.getPostComments = async (req, res) => {
       include: ["likes", "user"],
       limit: parseInt(pageSize),
       offset: offset,
-      order: sortBy === 'rating' ? [] : [['createdAt', order]],  // Set order only if not sorting by rating
+      order: (sortBy === 'most' || sortBy === 'less') ? [] : [['createdAt', order]],  // Set order only if not sorting by rating
     });
 
     // Fetch likes and dislikes counts for each comment
@@ -234,7 +258,7 @@ exports.getPostComments = async (req, res) => {
     });
 
     // If sorting by rating, sort the filtered comments based on the computed ratings
-    if (sortBy === 'rating') {
+    if (sortBy === 'most' || sortBy === 'less') {
       filteredComments.sort((a, b) => (ratings[b.id] || 0) - (ratings[a.id] || 0));
       if (order === 'asc') {
         filteredComments.reverse();

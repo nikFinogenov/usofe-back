@@ -131,6 +131,7 @@ exports.getCategoryPosts = async (req, res) => {
     res.status(200).json({
       title: category.title,
       posts: category.posts,
+      desc: category.description,
       totalPosts: count,
       totalPages: Math.ceil(count / pageSize),
       currentPage: parseInt(page),

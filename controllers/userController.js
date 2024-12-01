@@ -211,9 +211,10 @@ exports.getUserPosts = async (req, res) => {
     pageSize = 12,
     sortBy = 'createdAt',
     order = 'DESC',
-    status = 'active'
+    status = null
   } = req.query;
   const { user_id } = req.params;
+  const authToken = req.headers.authorization;
 
   try {
     const offset = (page - 1) * pageSize;
@@ -223,10 +224,23 @@ exports.getUserPosts = async (req, res) => {
     where.userId = user_id;
     // if(!user_id) res.status(401).json({ error: 'Invalid token' });
     // console.log(user_id);
+    if (authToken) {
+      try {
+        req.user = jwt.verify(authToken.split(' ')[1], process.env.JWT_SECRET);
+        if (req.user.role !== "admin" && req.user.id !== user_id) {
+          where.status = "active";
+        }
+      } catch {
+        where.status = "active";
+      }
+    } else {
+      where.status = "active";
+    }
 
     if (status) {
       where.status = status;
     }
+    // console.log(where);
 
     const orderBy = [[sortBy, order.toUpperCase()]];
 
