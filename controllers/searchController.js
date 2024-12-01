@@ -14,7 +14,8 @@ exports.search = async (req, res) => {
         const results = {
             users: [],
             categories: [],
-            posts: []
+            posts: [],
+            totalResults: 0 // Add totalResults field
         };
 
         const queries = q.split(' ');
@@ -48,6 +49,7 @@ exports.search = async (req, res) => {
                 },
                 attributes: { exclude: ['password'] }
             });
+            results.totalResults += results.users.length; // Add to totalResults
             return res.status(200).json(results);
         }
 
@@ -64,6 +66,7 @@ exports.search = async (req, res) => {
             });
             results.users = userResults;
             userIds = userResults.map(user => user.id);
+            results.totalResults += userResults.length; // Add to totalResults
         }
 
         let categoryIds = [];
@@ -85,6 +88,7 @@ exports.search = async (req, res) => {
             });
             results.categories = categories;
             categoryIds = categories.map(cat => cat.id);
+            results.totalResults += categories.length; // Add to totalResults
         }
 
         const postConditions = [];
@@ -100,37 +104,34 @@ exports.search = async (req, res) => {
         if (userIds.length > 0) {
             postConditions.push({ userId: { [db.Sequelize.Op.in]: userIds } });
         }
+
         if (dateQuery) {
-        
-            // Поддержка различных разделителей
-            const dateParts = dateQuery.split(/\/|\./);  // Разделяет по слешу или точке
+            // Support for different date delimiters
+            const dateParts = dateQuery.split(/\/|\./); // Split by slash or dot
         
             let day, month, year;
-            
-            // Проверка, если введена дата в формате "день.месяц.год" или "день/месяц/год"
+        
+            // Check if a full date (day.month.year or day/month/year) was provided
             if (dateParts.length === 3) {
                 day = parseInt(dateParts[0]);
                 month = parseInt(dateParts[1]);
                 year = parseInt(dateParts[2]);
             } 
-            // Если дата без года (например, "день/месяц")
+            // If only day/month is provided, use the current year
             else if (dateParts.length === 2) {
                 day = parseInt(dateParts[0]);
                 month = parseInt(dateParts[1]);
-                year = new Date().getFullYear();  // Используем текущий год
+                year = new Date().getFullYear();  // Current year
             }
-            // Если дата только день/месяц (например, "день.месяц")
+            // If only day is provided, use the current month and year
             else if (dateParts.length === 1) {
                 day = parseInt(dateParts[0]);
-                month = new Date().getMonth() + 1;  // Месяц текущий
-                year = new Date().getFullYear();    // Текущий год
+                month = new Date().getMonth() + 1;  // Current month
+                year = new Date().getFullYear();    // Current year
             }
-            // console.log(dateParts);
-            // console.log(dateParts.length);
         
-            // Форматирование даты в формате MM/DD/YYYY
+            // Format date as MM/DD/YYYY
             const formattedDate = `${month < 10 ? '0' + month : month}/${day < 10 ? '0' + day : day}/${year}`;
-            // console.log(formattedDate);
         
             postConditions.push({
                 [db.Sequelize.Op.and]: [
@@ -142,10 +143,8 @@ exports.search = async (req, res) => {
                 ]
             });
         }
-        
 
-
-        const posts = await db.Post.findAll({
+        const posts = await db.Post.findAndCountAll({
             where: postConditions.length > 0
                 ? { [db.Sequelize.Op.and]: postConditions }
                 : {},
@@ -162,7 +161,9 @@ exports.search = async (req, res) => {
             offset: offset
         });
 
-        results.posts = posts;
+        results.posts = posts.rows;
+        results.totalResults += posts.count; // Add to totalResults
+        // console.log(results.totalResults);
 
         res.status(200).json(results);
     } catch (error) {
