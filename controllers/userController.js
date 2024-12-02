@@ -3,7 +3,6 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
 const { Op } = require('sequelize');
-// const { sendConfirmationEmail, sendResetEmail } = require('../services/emailService');
 
 
 const defaultAvatars = [
@@ -79,17 +78,15 @@ exports.uploadAvatar = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Check if the old avatar is not one of the default avatars and delete it
     const oldAvatarFileName = user.profilePicture && path.basename(user.profilePicture);
     if (oldAvatarFileName && !defaultAvatars.includes(oldAvatarFileName)) {
       const oldAvatarPath = path.join(__dirname, '..', 'uploads', 'avatars', oldAvatarFileName);
 
       if (fs.existsSync(oldAvatarPath)) {
-        fs.unlinkSync(oldAvatarPath); // Delete the old avatar
+        fs.unlinkSync(oldAvatarPath);
       }
     }
 
-    // Update the user's profile picture with the new one
     user.profilePicture = newAvatar;
     await user.save();
 
@@ -113,7 +110,6 @@ exports.updateUser = async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized to update this user' });
     }
 
-    // Check for unique login if it's being updated
     if (login && login !== user.login) {
       const existingLoginUser = await db.User.findOne({ where: { login } });
       if (existingLoginUser) {
@@ -121,7 +117,6 @@ exports.updateUser = async (req, res) => {
       }
     }
 
-    // Check for unique email if it's being updated
     if (email && email !== user.email) {
       const existingEmailUser = await db.User.findOne({ where: { email } });
       if (existingEmailUser) {
@@ -129,7 +124,6 @@ exports.updateUser = async (req, res) => {
       }
     }
 
-    // Update fields if they are provided in the request
     if (fullName) user.fullName = fullName;
     if (email) user.email = email;
     if (login) user.login = login;
@@ -172,7 +166,6 @@ exports.deleteUserPosts = async (req, res) => {
 
     const userPosts = await db.Post.findAll({ where: { userId: user_id } });
 
-    // Delete each post individually to trigger cascading deletes on comments
     for (const post of userPosts) {
       await post.destroy(); 
     }
@@ -182,7 +175,6 @@ exports.deleteUserPosts = async (req, res) => {
   }
 };
 
-// Deletes all comments by a user
 exports.deleteUserComments = async (req, res) => {
   try {
     const { user_id } = req.params;
@@ -192,10 +184,8 @@ exports.deleteUserComments = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // await db.Comment.destroy({ where: { userId: user_id } });
     const userComments = await db.Comment.findAll({ where: { userId: user_id } });
 
-    // Delete each post individually to trigger cascading deletes on comments
     for (const comment of userComments) {
       await comment.destroy(); 
     }
@@ -226,7 +216,6 @@ exports.getUserPosts = async (req, res) => {
       try {
         req.user = jwt.verify(authToken.split(' ')[1], process.env.JWT_SECRET);
         if (req.user.role !== "admin" && Number(req.user.id) !== Number(user_id)) {
-          // console.log(req.user.id, user_id)
           where.status = "active";
         }
       } catch {
@@ -239,8 +228,6 @@ exports.getUserPosts = async (req, res) => {
     if (status) {
       where.status = status;
     }
-    // console.log(where);
-    // console.log(where);
 
     const orderBy = [[sortBy, order.toUpperCase()]];
 
@@ -295,19 +282,17 @@ exports.getUserStats = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Получение количества постов
     const totalPosts = await db.Post.count({
       where: { userId: user.id, status: 'active' },
     });
 
-    // Получение последнего комментария
     const lastComment = await db.Comment.findOne({
       where: { userId: user.id },
       order: [['createdAt', 'DESC']],
       attributes: ['content', 'createdAt'],
     });
 
-    const accountAge = Math.ceil((new Date() - new Date(user.createdAt)) / (1000 * 60 * 60 * 24)); // Возраст аккаунта в днях
+    const accountAge = Math.ceil((new Date() - new Date(user.createdAt)) / (1000 * 60 * 60 * 24));
 
     res.status(200).json({
       user,

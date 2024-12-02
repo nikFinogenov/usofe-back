@@ -33,9 +33,6 @@ initializeSequelize()
 
 app.use("/admin", adminRouter);
 
-// app.use(cors({
-//   origin: FRONT_URL, credentials: true
-// }));
 const allowedOrigins = [
   'http://localhost:3000',
   // `http://${IP}:3000`,

@@ -2,8 +2,8 @@ const db = require("../models");
 
 exports.search = async (req, res) => {
     const { q } = req.query;
-    const page = parseInt(req.query.page) || 1; // Get the page number from the query
-    const pageSize = 10; // Number of results per page
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = 10;
     const offset = (page - 1) * pageSize;
 
     if (!q) {
@@ -15,7 +15,7 @@ exports.search = async (req, res) => {
             users: [],
             categories: [],
             posts: [],
-            totalResults: 0 // Add totalResults field
+            totalResults: 0
         };
 
         const queries = q.split(' ');
@@ -49,7 +49,7 @@ exports.search = async (req, res) => {
                 },
                 attributes: { exclude: ['password'] }
             });
-            results.totalResults += results.users.length; // Add to totalResults
+            results.totalResults += results.users.length;
             return res.status(200).json(results);
         }
 
@@ -66,7 +66,7 @@ exports.search = async (req, res) => {
             });
             results.users = userResults;
             userIds = userResults.map(user => user.id);
-            results.totalResults += userResults.length; // Add to totalResults
+            results.totalResults += userResults.length;
         }
 
         let categoryIds = [];
@@ -88,7 +88,7 @@ exports.search = async (req, res) => {
             });
             results.categories = categories;
             categoryIds = categories.map(cat => cat.id);
-            results.totalResults += categories.length; // Add to totalResults
+            results.totalResults += categories.length;
         }
 
         const postConditions = [];
@@ -106,31 +106,26 @@ exports.search = async (req, res) => {
         }
 
         if (dateQuery) {
-            // Support for different date delimiters
-            const dateParts = dateQuery.split(/\/|\./); // Split by slash or dot
+            const dateParts = dateQuery.split(/\/|\./);
         
             let day, month, year;
         
-            // Check if a full date (day.month.year or day/month/year) was provided
             if (dateParts.length === 3) {
                 day = parseInt(dateParts[0]);
                 month = parseInt(dateParts[1]);
                 year = parseInt(dateParts[2]);
             } 
-            // If only day/month is provided, use the current year
             else if (dateParts.length === 2) {
                 day = parseInt(dateParts[0]);
                 month = parseInt(dateParts[1]);
-                year = new Date().getFullYear();  // Current year
+                year = new Date().getFullYear();
             }
-            // If only day is provided, use the current month and year
             else if (dateParts.length === 1) {
                 day = parseInt(dateParts[0]);
-                month = new Date().getMonth() + 1;  // Current month
-                year = new Date().getFullYear();    // Current year
+                month = new Date().getMonth() + 1;
+                year = new Date().getFullYear();
             }
         
-            // Format date as MM/DD/YYYY
             const formattedDate = `${month < 10 ? '0' + month : month}/${day < 10 ? '0' + day : day}/${year}`;
         
             postConditions.push({
@@ -159,12 +154,10 @@ exports.search = async (req, res) => {
             ],
             limit: pageSize,
             offset: offset,
-            // distinct: true
         });
 
         results.posts = posts.rows;
-        results.totalResults += posts.count; // Add to totalResults
-        // console.log(results.totalResults);
+        results.totalResults += posts.count;
 
         res.status(200).json(results);
     } catch (error) {

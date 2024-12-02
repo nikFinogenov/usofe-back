@@ -10,21 +10,19 @@ exports.getAllPosts = async (req, res) => {
     const authToken = req.headers.authorization;
     const where = {};
 
-    // Проверка авторизации пользователя
     if (authToken) {
       try {
         req.user = jwt.verify(authToken.split(' ')[1], process.env.JWT_SECRET);
         if (req.user.role !== "admin") {
-          where.status = "active"; // Неадминистраторы могут видеть только активные посты
+          where.status = "active";
         }
       } catch {
-        where.status = "active"; // По умолчанию активные посты, если токен недействителен
+        where.status = "active";
       }
     } else {
-      where.status = "active"; // По умолчанию активные посты, если токен не предоставлен
+      where.status = "active";
     }
 
-    // Настройка условия where в зависимости от фильтра
     if (filter === 'active') {
       where.status = 'active';
     } else if (filter === 'inactive') {
@@ -33,7 +31,6 @@ exports.getAllPosts = async (req, res) => {
 
     const offset = (page - 1) * pageSize;
 
-    // Определение порядка сортировки
     let orderCriteria = [];
 
     switch (sortBy) {
@@ -56,11 +53,10 @@ exports.getAllPosts = async (req, res) => {
         orderCriteria.push(['views', 'ASC']);
         break;
       default:
-        orderCriteria.push(['createdAt', 'DESC']); // По умолчанию по новизне
+        orderCriteria.push(['createdAt', 'DESC']);
         break;
     }
 
-    // Получение постов с пагинацией и необходимыми ассоциациями
     const { rows: postsData, count: totalPosts } = await db.Post.findAndCountAll({
       where,
       limit: parseInt(pageSize),
@@ -84,7 +80,6 @@ exports.getAllPosts = async (req, res) => {
           [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'like')`), 'likeCount'],
           [db.Sequelize.literal(`(SELECT COUNT(*) FROM "Likes" WHERE "Likes"."postId" = "Post"."id" AND "Likes"."type" = 'dislike')`), 'dislikeCount'],
           'views',
-          // Расчёт рейтинга для каждого поста
           [db.Sequelize.literal(`
             (SELECT COUNT(*) 
              FROM "Likes" 
@@ -100,7 +95,6 @@ exports.getAllPosts = async (req, res) => {
       distinct: true
     });
 
-    // Возврат пагинированных постов с общим количеством и количеством страниц
     res.status(200).json({
       posts: postsData,
       totalPosts,
@@ -116,9 +110,8 @@ exports.getAllPosts = async (req, res) => {
 exports.getPost = async (req, res) => {
   try {
     const authToken = req.headers.authorization;
-    // console.log(authToken);
     if (authToken) req.user = jwt.verify(authToken.split(' ')[1], process.env.JWT_SECRET);
-    const userId = req.user ? req.user.id : null; // Проверяем, есть ли авторизация
+    const userId = req.user ? req.user.id : null;
     const post = await db.Post.findByPk(req.params.post_id, {
       include: [
         "categories",
@@ -131,10 +124,8 @@ exports.getPost = async (req, res) => {
       return res.status(404).json({ error: "Post not found" });
     }
 
-    // Увеличиваем просмотры
     await post.increment("views", { by: 1 });
 
-    // Добавляем информацию о фаворите, если пользователь авторизован
     if (userId) {
       const favourite = await db.Favourite.findOne({
         where: { userId, postId: post.id },
@@ -172,7 +163,7 @@ exports.getRandomPost = async (req, res) => {
 };
 
 exports.getPostComments = async (req, res) => {
-  const { page = 1, pageSize = 10, sortBy = 'most', order = 'desc', filter = 'all' } = req.query;  // Get pagination, sorting, and filtering parameters
+  const { page = 1, pageSize = 10, sortBy = 'most', order = 'desc', filter = 'all' } = req.query;
 
   try {
     const postId = req.params.post_id;
@@ -184,7 +175,6 @@ exports.getPostComments = async (req, res) => {
       return res.status(404).json({ error: "Post not found" });
     }
 
-    // Determine visibility of comments based on user role
     if (authToken) {
       try {
         req.user = jwt.verify(authToken.split(' ')[1], process.env.JWT_SECRET);
@@ -198,19 +188,16 @@ exports.getPostComments = async (req, res) => {
       whereCondition.status = "active";
     }
 
-    // Adjust the where condition based on the filter
     if (filter === 'active') {
       whereCondition.status = 'active';
     } else if (filter === 'inactive') {
       whereCondition.status = 'inactive';
     }
-    // Fetch all comments without pagination first
     const allComments = await db.Comment.findAll({
       where: whereCondition,
       include: ["likes", "user"],
     });
 
-    // Fetch likes and dislikes counts for each comment
     const commentIds = allComments.map(comment => comment.id);
     const likesCounts = await db.Like.findAll({
       where: {
@@ -230,7 +217,6 @@ exports.getPostComments = async (req, res) => {
       group: ['commentId']
     });
 
-    // Map counts to a rating for each comment
     const ratings = {};
     likesCounts.forEach(like => {
       ratings[like.commentId] = (ratings[like.commentId] || 0) + like.get('count');
@@ -239,54 +225,43 @@ exports.getPostComments = async (req, res) => {
       ratings[dislike.commentId] = (ratings[dislike.commentId] || 0) - dislike.get('count');
     });
 
-    // Filter out replies to inactive comments
     const activeCommentIds = allComments
       .filter(comment => comment.status === 'active')
       .map(comment => comment.id);
 
     const filteredComments = allComments.filter(comment => {
-      // Keep top-level comments or replies where the parent comment is active
       return !comment.replyId || activeCommentIds.includes(comment.replyId);
     });
 
-    // Sort comments based on the requested sorting criteria
     if (sortBy === 'most' || sortBy === 'less') {
       filteredComments.sort((a, b) => {
         const ratingA = ratings[a.id] || 0;
         const ratingB = ratings[b.id] || 0;
 
-        // Сначала сортируем по рейтингу
         if (ratingA !== ratingB) {
-          return (ratingB - ratingA); // Сортируем по рейтингу (больше впереди)
+          return (ratingB - ratingA);
         }
 
-        // Если рейтинги равны, сортируем по дате создания (от старых к новым)
         return new Date(a.createdAt) - new Date(b.createdAt);
       });
 
-      // Если порядок 'asc', то инвертируем массив
       if (order === 'asc') {
         filteredComments.reverse();
       }
     } else if (sortBy === 'newest' || sortBy === 'oldest') {
-      // Сортировка только по дате создания
       filteredComments.sort((a, b) => {
-        return new Date(a.createdAt) - new Date(b.createdAt); // От старых к новым
+        return new Date(a.createdAt) - new Date(b.createdAt);
       });
 
-      // Если порядок 'desc', инвертируем массив
       if (order === 'desc') {
         filteredComments.reverse();
       }
     }
 
-    // Calculate offset for pagination
     const offset = (page - 1) * pageSize;
 
-    // Apply pagination
     const paginatedComments = filteredComments.slice(offset, offset + pageSize);
 
-    // Return paginated comments with total count and total pages
     res.status(200).json({
       comments: paginatedComments,
       totalComments: filteredComments.length,
@@ -309,7 +284,7 @@ exports.createComment = async (req, res) => {
       postId: req.params.post_id,
     });
     const commentWithDetails = await db.Comment.findByPk(newComment.id, {
-      include: ["likes", "user"], // Включаем ассоциации
+      include: ["likes", "user"],
     });
 
     res.status(201).json(commentWithDetails);
@@ -431,7 +406,6 @@ exports.updatePost = async (req, res) => {
     }
 
     await post.save();
-    // console.log(post);
     if (categories) {
       const updatedCategories = await db.Category.findAll({
         where: { id: categories },

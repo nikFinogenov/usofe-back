@@ -46,7 +46,6 @@ async function setupDatabase() {
   }
 }
 
-// const MODEL_AMOUNT = 5;
 const USER_AMOUNT = 15;
 const POST_AMOUNT = 500;
 const CATEGORY_AMOUNT = 10;

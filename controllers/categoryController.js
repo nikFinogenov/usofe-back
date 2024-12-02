@@ -78,7 +78,6 @@ exports.getCategoryPosts = async (req, res) => {
     }
 
     const orderBy = [[sortBy, order.toUpperCase()]];
-    // console.log(req.params.category_id);
 
     const category = await db.Category.findByPk(req.params.category_id, {
       where,
@@ -123,11 +122,9 @@ exports.getCategoryPosts = async (req, res) => {
         }
       ],
     });
-    // console.log(category.posts.length);
     const count = category.posts.length;
     category.posts = category.posts.slice((parseInt(page) - 1) * pageSize, parseInt(page) * pageSize)
     if (!category) return res.status(404).json({ error: "Category not found" });
-    // console.log(category);
     res.status(200).json({
       title: category.title,
       posts: category.posts,

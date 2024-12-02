@@ -77,10 +77,6 @@ exports.login = async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // if (!user.emailConfirmed) {
-        //     return res.status(403).json({ error: 'Please confirm your email before logging in' });
-        // }
-
         const validPassword = user.checkPassword(password);
         if (!validPassword) {
             return res.status(401).json({ error: 'Invalid login credentials' });
@@ -106,7 +102,6 @@ exports.login = async (req, res) => {
             user: userData
         });
 
-        // res.status(200).json({ message: 'Login successful', token });
     } catch (error) { 
         res.status(500).json({ error: 'Login failed' });
     }
@@ -120,11 +115,8 @@ exports.me = async (req, res) => {
     try {
         const { token } = req.body;
 
-        // Verify the token
         const decoded = jwt.verify(token, JWT_SECRET);
-        // console.log("YA TUTA");
 
-        // Find the user by the ID from the decoded token
         const user = await db.User.findByPk(decoded.id, {
             attributes: ['id', 'login', 'fullName', 'profilePicture', 'email', 'role', 'rating', 'emailConfirmed']
         });
@@ -133,7 +125,6 @@ exports.me = async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Send user details back in response
         res.status(200).json({ user });
     } catch (error) {
         if (error.name === 'TokenExpiredError') {
@@ -142,7 +133,6 @@ exports.me = async (req, res) => {
             return res.status(401).json({ error: 'Invalid token' });
         }
 
-        // Handle other errors
         res.status(500).json({ error: 'Could not retrieve user information' });
     }
 };

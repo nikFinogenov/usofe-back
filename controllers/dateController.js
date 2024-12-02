@@ -1,7 +1,7 @@
 const db = require("../models");
 const jwt = require('jsonwebtoken');
 exports.getDatePosts = async (req, res) => {
-    const { date } = req.params; // Extract date from request parameters
+    const { date } = req.params;
     const authToken = req.headers.authorization;
     let {
         page = 1,
@@ -10,36 +10,29 @@ exports.getDatePosts = async (req, res) => {
         order = 'DESC',
         status = null
     } = req.query;
-    // console.log(authToken);
     if (authToken) req.user = jwt.verify(authToken.split(' ')[1], process.env.JWT_SECRET);
-    // const userId = req.user ? req.user.id : null; // Проверяем, есть ли авторизация
     if (authToken) {
         try {
             req.user = jwt.verify(authToken.split(' ')[1], process.env.JWT_SECRET);
             if (req.user.role !== "admin") {
-                status = "active"; // Неадминистраторы могут видеть только активные посты
+                status = "active";
             }
         } catch {
-            status = "active"; // По умолчанию активные посты, если токен недействителен
+            status = "active";
         }
     } else {
-        status = "active"; // По умолчанию активные посты, если токен не предоставлен
+        status = "active";
     }
-    // if (status) {
-    //     status = status;
-    // }
-    // console.log(status);
-    // status = 'active';
     try {
         const offset = (page - 1) * pageSize;
 
         const where = {
             [db.Sequelize.Op.and]: [
                 db.Sequelize.where(
-                    db.Sequelize.fn('DATE', db.Sequelize.col('Post.createdAt')), '=', // Specify the table alias
+                    db.Sequelize.fn('DATE', db.Sequelize.col('Post.createdAt')), '=',
                     date
                 ),
-                status ? { status: status } : ""// Filter by status
+                status ? { status: status } : ""
             ]
         };
 
