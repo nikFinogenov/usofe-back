@@ -61,7 +61,7 @@ async function seedDatabase() {
       const usersToCreate = USER_AMOUNT - userCount;
       for (let i = 0; i < usersToCreate; i++) {
         await db.User.create({
-          login: faker.internet.userName(),
+          login: faker.internet.username(),
           password: faker.internet.password(),
           fullName: faker.person.fullName(),
           email: faker.internet.email(),
