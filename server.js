@@ -33,10 +33,26 @@ initializeSequelize()
 
 app.use("/admin", adminRouter);
 
-app.use(cors({
-  origin: FRONT_URL, credentials: true
-}));
-// app.use(cors({ origin: process.env.FRONT_URL, credentials: true }));
+// app.use(cors({
+//   origin: FRONT_URL, credentials: true
+// }));
+const allowedOrigins = [
+  'http://localhost:3000',
+  // `http://${IP}:3000`,
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+      if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+          callback(null, true);
+      } else {
+          callback(new Error('Not allowed by CORS'));
+      }
+  },
+  credentials: true,
+};
+app.use(cors(corsOptions));
+
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/favourites", require("./routes/favouriteRoutes"));
 app.use("/api/posts", require("./routes/postRoutes"));
