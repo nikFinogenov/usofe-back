@@ -148,7 +148,7 @@ exports.search = async (req, res) => {
             where: postConditions.length > 0
                 ? { [db.Sequelize.Op.and]: postConditions }
                 : {},
-            include: [
+            include: ["user",
                 {
                     association: "categories",
                     where: categoryIds.length > 0
@@ -158,7 +158,8 @@ exports.search = async (req, res) => {
                 }
             ],
             limit: pageSize,
-            offset: offset
+            offset: offset,
+            // distinct: true
         });
 
         results.posts = posts.rows;

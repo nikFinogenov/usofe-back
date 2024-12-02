@@ -222,12 +222,11 @@ exports.getUserPosts = async (req, res) => {
 
     const where = {};
     where.userId = user_id;
-    // if(!user_id) res.status(401).json({ error: 'Invalid token' });
-    // console.log(user_id);
     if (authToken) {
       try {
         req.user = jwt.verify(authToken.split(' ')[1], process.env.JWT_SECRET);
-        if (req.user.role !== "admin" && req.user.id !== user_id) {
+        if (req.user.role !== "admin" && Number(req.user.id) !== Number(user_id)) {
+          // console.log(req.user.id, user_id)
           where.status = "active";
         }
       } catch {
@@ -240,6 +239,7 @@ exports.getUserPosts = async (req, res) => {
     if (status) {
       where.status = status;
     }
+    // console.log(where);
     // console.log(where);
 
     const orderBy = [[sortBy, order.toUpperCase()]];
@@ -280,8 +280,8 @@ exports.getUserPosts = async (req, res) => {
       currentPage: parseInt(page),
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Failed to retrieve posts" });
+    if (error.name === 'SequelizeDatabaseError') return res.status(401).json({ error: 'Unauthorized' });
+    else res.status(500).json({ error: "Failed to retrieve posts" });
   }
 };
 

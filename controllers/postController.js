@@ -188,7 +188,7 @@ exports.getPostComments = async (req, res) => {
     if (authToken) {
       try {
         req.user = jwt.verify(authToken.split(' ')[1], process.env.JWT_SECRET);
-        if (req.user.role !== "admin" && req.user.id !== post.userId) {
+        if (req.user.role !== "admin" && Number(req.user.id) !== Number(post.userId)) {
           whereCondition.status = "active";
         }
       } catch {
@@ -204,22 +204,14 @@ exports.getPostComments = async (req, res) => {
     } else if (filter === 'inactive') {
       whereCondition.status = 'inactive';
     }
-    // If filter is 'all', we don't modify the whereCondition
-
-    // Calculate offset for pagination
-    const offset = (page - 1) * pageSize;
-
-    // Fetch comments with pagination
-    const { rows: comments, count: totalComments } = await db.Comment.findAndCountAll({
+    // Fetch all comments without pagination first
+    const allComments = await db.Comment.findAll({
       where: whereCondition,
       include: ["likes", "user"],
-      limit: parseInt(pageSize),
-      offset: offset,
-      order: (sortBy === 'most' || sortBy === 'less') ? [] : [['createdAt', order]],  // Set order only if not sorting by rating
     });
 
     // Fetch likes and dislikes counts for each comment
-    const commentIds = comments.map(comment => comment.id);
+    const commentIds = allComments.map(comment => comment.id);
     const likesCounts = await db.Like.findAll({
       where: {
         commentId: commentIds,
@@ -248,28 +240,57 @@ exports.getPostComments = async (req, res) => {
     });
 
     // Filter out replies to inactive comments
-    const activeCommentIds = comments
+    const activeCommentIds = allComments
       .filter(comment => comment.status === 'active')
       .map(comment => comment.id);
 
-    const filteredComments = comments.filter(comment => {
+    const filteredComments = allComments.filter(comment => {
       // Keep top-level comments or replies where the parent comment is active
       return !comment.replyId || activeCommentIds.includes(comment.replyId);
     });
 
-    // If sorting by rating, sort the filtered comments based on the computed ratings
+    // Sort comments based on the requested sorting criteria
     if (sortBy === 'most' || sortBy === 'less') {
-      filteredComments.sort((a, b) => (ratings[b.id] || 0) - (ratings[a.id] || 0));
+      filteredComments.sort((a, b) => {
+        const ratingA = ratings[a.id] || 0;
+        const ratingB = ratings[b.id] || 0;
+
+        // Сначала сортируем по рейтингу
+        if (ratingA !== ratingB) {
+          return (ratingB - ratingA); // Сортируем по рейтингу (больше впереди)
+        }
+
+        // Если рейтинги равны, сортируем по дате создания (от старых к новым)
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      });
+
+      // Если порядок 'asc', то инвертируем массив
       if (order === 'asc') {
+        filteredComments.reverse();
+      }
+    } else if (sortBy === 'newest' || sortBy === 'oldest') {
+      // Сортировка только по дате создания
+      filteredComments.sort((a, b) => {
+        return new Date(a.createdAt) - new Date(b.createdAt); // От старых к новым
+      });
+
+      // Если порядок 'desc', инвертируем массив
+      if (order === 'desc') {
         filteredComments.reverse();
       }
     }
 
+    // Calculate offset for pagination
+    const offset = (page - 1) * pageSize;
+
+    // Apply pagination
+    const paginatedComments = filteredComments.slice(offset, offset + pageSize);
+
     // Return paginated comments with total count and total pages
     res.status(200).json({
-      comments: filteredComments,
-      totalComments: totalComments,
-      totalPages: Math.ceil(totalComments / pageSize),
+      comments: paginatedComments,
+      totalComments: filteredComments.length,
+      totalPages: Math.ceil(filteredComments.length / pageSize),
       currentPage: parseInt(page),
     });
   } catch (error) {
