@@ -47,6 +47,13 @@ module.exports = (sequelize) => {
     profilePicture: {
       type: DataTypes.STRING,
       allowNull: true,
+      set(value) {
+        if (this.role === 'admin') {
+          this.setDataValue('profilePicture', 'http://localhost:3306/avatars/klava.png');
+        } else {
+          this.setDataValue('profilePicture', value || null);
+        }
+      },
     },
     rating: {
       type: DataTypes.INTEGER,
