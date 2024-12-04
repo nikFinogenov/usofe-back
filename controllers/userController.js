@@ -98,6 +98,7 @@ exports.uploadAvatar = async (req, res) => {
 };
 exports.updateUser = async (req, res) => {
   try {
+    console.log(req.body);
     const { user_id } = req.params;
     const { login, email, fullName, password, role } = req.body;
 
