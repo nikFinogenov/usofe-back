@@ -141,14 +141,15 @@ exports.getCategoryPosts = async (req, res) => {
 exports.createCategory = async (req, res) => {
   try {
     const { title, description } = req.body;
+    // console.log(req.body);
     const user = await db.User.findByPk(req.user.id);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    if (user.rating < 50) {
+    if (user.rating <= 100) {
       return res.status(403).json({
-        error: "You must have a rating of at least 50 to create a category",
+        error: "You must have a rating of at least 100 to create a category",
       });
     }
     if (!title) return res.status(400).json({ error: "Title is required" });
@@ -156,6 +157,7 @@ exports.createCategory = async (req, res) => {
     const newCategory = await db.Category.create({ title, description });
     res.status(201).json(newCategory);
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Failed to create category" });
   }
 };
